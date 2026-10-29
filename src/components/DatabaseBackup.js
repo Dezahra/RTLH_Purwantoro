@@ -220,7 +220,7 @@ export function initDatabaseBackupEvents(container, { showToast, onStateChange }
         }
       } catch (err) {
         console.error("Gagal mengunduh cadangan:", err);
-        alert(`Gagal mengunduh cadangan basis data:\n${err.message || err}\n\nPastikan server backend PHP (http://localhost:8000) aktif dan dapat terhubung ke MySQL.`);
+        alert(`Gagal mengunduh cadangan basis data:\n${err.message || err}\n\nPastikan server backend SIPELITA aktif dan dapat terhubung ke MySQL.`);
       } finally {
         btnBackupZip.disabled = false;
         if (backupProgress) backupProgress.style.display = "none";

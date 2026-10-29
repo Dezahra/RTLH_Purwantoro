@@ -35,30 +35,6 @@ export function renderDashboard() {
         </div>
         <div class="kpi-value" style="color:var(--warning);">${stats.pending}</div>
       </div>
-
-      <div class="kpi-card" style="border-left: 4px solid var(--danger);">
-        <div class="kpi-header">
-          <span class="kpi-title">Butuh Revisi Lapangan</span>
-          <div class="kpi-icon-wrap" style="color:var(--danger);">${icons.alertTriangle('w-4 h-4')}</div>
-        </div>
-        <div class="kpi-value" style="color:var(--danger);">${stats.revisi}</div>
-      </div>
-
-      <div class="kpi-card" style="border-left: 4px solid #6366f1;">
-        <div class="kpi-header">
-          <span class="kpi-title">Kerusakan Struktur</span>
-          <div class="kpi-icon-wrap" style="color:#6366f1;">${icons.layers('w-4 h-4')}</div>
-        </div>
-        <div class="kpi-value" style="color:#6366f1;">${stats.issues?.strukturRusak || 0}</div>
-      </div>
-
-      <div class="kpi-card" style="border-left: 4px solid #0284c7;">
-        <div class="kpi-header">
-          <span class="kpi-title">Tanpa Jamban Layak</span>
-          <div class="kpi-icon-wrap" style="color:#0284c7;">${icons.info('w-4 h-4')}</div>
-        </div>
-        <div class="kpi-value" style="color:#0284c7;">${stats.issues?.tanpaJamban || 0}</div>
-      </div>
     </div>
 
     <!-- Analytics Charts Grid -->
@@ -84,63 +60,6 @@ export function renderDashboard() {
         </div>
         <div class="chart-container">
           <canvas id="chart-rw-bar"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Defisit Parameter Fisik & Urgensi Intervensi -->
-    <div class="card" style="margin-bottom: 1.5rem;">
-      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-        <div>
-          <div class="card-title">
-            ${icons.alertTriangle('w-5 h-5 text-warning')} Parameter
-          </div>
-        </div>
-      </div>
-      <div class="issues-grid">
-        <div class="issue-pill">
-          <span class="issue-pill-text">Pondasi & Sloof Rusak / Rapuh</span>
-          <span class="issue-pill-count">${stats.issues.pondasiSloofRusak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Kolom & Ring Balok Rusak</span>
-          <span class="issue-pill-count">${stats.issues.kolomBalokRusak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Rangka Atap Melengkung / Rapuh</span>
-          <span class="issue-pill-count">${stats.issues.rangkaAtapRusak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Penutup Atap Bocor / Asbes Pecah</span>
-          <span class="issue-pill-count">${stats.issues.atapRusak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Dinding Rusak / Tidak Kedap Air</span>
-          <span class="issue-pill-count">${stats.issues.dindingRusak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Lantai Tanah / Belum Diplester</span>
-          <span class="issue-pill-count">${stats.issues.lantaiRusak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Sanitasi / Tanpa Jamban Sendiri</span>
-          <span class="issue-pill-count">${stats.issues.tanpaJamban} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Sumber Air Minum Tidak Terlindung</span>
-          <span class="issue-pill-count">${stats.issues.airTidakLayak} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Pencahayaan Alami Kurang / Gelap</span>
-          <span class="issue-pill-count">${stats.issues.pencahayaanKurang} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Penghawaan / Ventilasi Pengap</span>
-          <span class="issue-pill-count">${stats.issues.penghawaanKurang} Rumah</span>
-        </div>
-        <div class="issue-pill">
-          <span class="issue-pill-text">Luas Sempit (&lt; 7.2 m²/jiwa)</span>
-          <span class="issue-pill-count">${stats.issues.luasKurang} Rumah</span>
         </div>
       </div>
     </div>

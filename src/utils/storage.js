@@ -1,6 +1,6 @@
 import { calculateHousingEligibility } from "./calculator.js";
 
-const API_BASE = "http://localhost:8000/src/data/api";
+const API_BASE = "/src/data/api";
 const STORAGE_KEY = "sipelita_desa_surveys_v1";
 const ROLE_KEY = "sipelita_desa_role";
 const REGISTERED_USERS_KEY = "sipelita_desa_registered_users_v2";
@@ -34,7 +34,7 @@ export const USERS = {
 };
 
 export function isSurveyOwnedByPetugas(surveyItem, user) {
-  if (!user) return false;
+  if (!user || !surveyItem) return false;
 
   const uId = String(user.id || "").toLowerCase().trim();
   const uUsername = String(user.username || "").toLowerCase().trim();
@@ -45,30 +45,42 @@ export function isSurveyOwnedByPetugas(surveyItem, user) {
   const pId = String(surveyItem.petugas_id || "").toLowerCase().trim();
   const pNama = String(surveyItem.petugas_nama || surveyItem.nama_petugas || "").toLowerCase().trim();
 
-  // 1. Cek created_by terhadap id, username, id_petugas
+  // 1. Jika data ini dibuat / disurvei oleh Admin atau Pegawai Kelurahan, BUKAN milik Petugas
+  const isAdminOrPegawai =
+    cBy.includes("adm") ||
+    cBy.includes("pgw") ||
+    pId.startsWith("adm") ||
+    pId.startsWith("pgw") ||
+    pNama.includes("admin") ||
+    pNama.includes("pegawai") ||
+    pNama.includes("devi zahra");
+
+  if (isAdminOrPegawai) {
+    if (uId && cBy === uId) return true;
+    if (uUsername && cBy === uUsername) return true;
+    return false;
+  }
+
+  // 2. Cek kepemilikan eksplisit berdasarkan created_by
   if (cBy) {
     if (uId && cBy === uId) return true;
     if (uUsername && cBy === uUsername) return true;
     if (uIdPetugas && cBy === uIdPetugas) return true;
+    // Jika ada created_by namun milik akun lain, tolak
+    return false;
   }
 
-  // 2. Cek petugas_id terhadap id_petugas, id
+  // 3. Cek petugas_id terhadap id_petugas, id
   if (pId) {
     if (uIdPetugas && pId === uIdPetugas) return true;
     if (uId && pId === uId) return true;
+    return false;
   }
 
-  // 3. Cek petugas_nama terhadap nama user
+  // 4. Cek petugas_nama terhadap nama user (harus cocok dengan nama petugas)
   if (pNama && uNama) {
     if (pNama === uNama) return true;
-    if (pNama.includes(uNama) || uNama.includes(pNama)) return true;
-  }
-
-  // 4. Kebijakan 1 RW 1 Petugas: Survei pada RW penugasan petugas
-  if (user.role === 'petugas' && user.rw && surveyItem.rw) {
-    const uRw = String(user.rw).replace(/\D/g, '').padStart(2, '0');
-    const sRw = String(surveyItem.rw).replace(/\D/g, '').padStart(2, '0');
-    if (uRw && sRw && uRw === sRw) return true;
+    return false;
   }
 
   return false;

@@ -87,12 +87,6 @@ export function renderSidebar(activeTab) {
       <!-- Sidebar Brand Header -->
       <div class="sidebar-brand-container">
         <a href="#" class="sidebar-brand-link" id="nav-brand-click" title="Ke Beranda SIPELITA">
-          <div class="sidebar-brand-emblem">
-            <svg width="26" height="26" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 8C12 5.79086 13.7909 4 16 4H32C33.1046 4 34 4.89543 34 6V10C34 11.1046 33.1046 12 32 12H20C17.7909 12 16 13.7909 16 16V20H28C29.1046 20 30 20.8954 30 22V26C30 27.1046 29.1046 28 28 28H16V34C16 35.1046 15.1046 36 14 36H10C8.89543 36 8 35.1046 8 34V12C8 9.79086 9.79086 8 12 8Z" fill="#38bdf8"/>
-              <path d="M18 16C18 13.7909 19.7909 12 22 12H34C35.1046 12 36 12.8954 36 14V18C36 19.1046 35.1046 20 34 20H22C19.7909 20 18 18.2091 18 16Z" fill="#ffffff" opacity="0.95"/>
-            </svg>
-          </div>
           <div class="sidebar-brand-text">
             <div class="sidebar-brand-title-row">
               <span class="sidebar-brand-title">SIPELITA</span>

@@ -431,7 +431,7 @@ export function bindLoginEvents(container, { onLoginSuccess }) {
         submitBtn.innerHTML = "Memeriksa Akun...";
         submitBtn.disabled = true;
 
-        const response = await fetch("http://localhost:8000/src/data/api/login.php", {
+        const response = await fetch("/src/data/api/login.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username: identifier, password })
@@ -620,7 +620,7 @@ export function bindLoginEvents(container, { onLoginSuccess }) {
         submitRegBtn.disabled = true;
         submitRegBtn.innerHTML = "Mendaftarkan...";
 
-        const response = await fetch("http://localhost:8000/src/data/api/register_user.php", {
+        const response = await fetch("/src/data/api/register_user.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

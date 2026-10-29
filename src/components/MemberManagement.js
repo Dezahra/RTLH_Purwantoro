@@ -267,7 +267,7 @@ export function initMemberManagementEvents(container, { showToast, onStateChange
 
     let users = [];
     try {
-      const res = await fetch("http://localhost:8000/src/data/api/get_users.php");
+      const res = await fetch("/src/data/api/get_users.php");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         users = json.data;
@@ -1066,7 +1066,7 @@ export function initMemberManagementEvents(container, { showToast, onStateChange
 
         try {
           // Kirim ke API pendaftaran
-          const response = await fetch("http://localhost:8000/src/data/api/register_user.php", {
+          const response = await fetch("/src/data/api/register_user.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

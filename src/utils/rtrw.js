@@ -88,7 +88,7 @@ export async function initRtRwDropdowns(container, savedRw = '', savedRt = '') {
 
     let rtrwList = [];
     try {
-        const res = await fetch('http://localhost:8000/src/data/api/get_rtrw.php');
+        const res = await fetch('/src/data/api/get_rtrw.php');
         if (res.ok) {
             const json = await res.json();
             if (json.status === 'success' && Array.isArray(json.data)) {
