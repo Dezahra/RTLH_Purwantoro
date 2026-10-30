@@ -249,7 +249,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
 
     const step5Foto = container.querySelector("#step5-foto-info");
     if (step5Foto) {
-      const slots = ['depan', 'dalam', 'dapur', 'toilet'];
+      const slots = ['depan', 'dalam', 'atap', 'sanitasi'];
       const filled = slots.filter(s => !!container.querySelector(`#input-foto-${s}`)?.value).length;
       step5Foto.innerHTML = `<span style="color:${filled === 4 ? '#059669' : '#d97706'}; font-weight:700;">${filled} / 4 Foto Terisi</span>`;
     }
@@ -284,6 +284,8 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     if (inputHidden) inputHidden.value = dataUrl;
     if (slotCard) slotCard.classList.add("has-photo");
     if (removeBtn) removeBtn.style.display = "inline-flex";
+    updateLiveCalculation();
+    triggerSaveDraft();
   }
 
   function compressAndApplyFile(targetSlot, file) {
@@ -553,6 +555,8 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       if (picker) picker.value = "";
       if (nativePicker) nativePicker.value = "";
       btn.style.display = "none";
+      updateLiveCalculation();
+      triggerSaveDraft();
     });
   });
 

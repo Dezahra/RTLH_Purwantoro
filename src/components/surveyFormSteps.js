@@ -243,7 +243,7 @@ export function renderStep2(initialData) {
           <label class="form-label">Penutup Atap <span class="req">*</span></label>
           <select name="atap" class="form-select" required>
             <option value="">-- Pilih Kondisi Penutup Atap --</option>
-            <option value="baik" ${initialData?.atap === 'baik' ? 'selected' : ''}>A. Genteng/seng kondisi baik</option>
+            <option value="baik" ${initialData?.atap === 'baik' ? 'selected' : ''}>A. Genteng/seng/asbes kondisi baik</option>
             <option value="sedang" ${initialData?.atap === 'sedang' ? 'selected' : ''}>B. Sebagian rusak / bocor</option>
             <option value="buruk" ${initialData?.atap === 'buruk' ? 'selected' : ''}>C. Asbes pecah / rawan runtuh</option>
           </select>
@@ -269,6 +269,32 @@ export function renderStep2(initialData) {
         </div>
 
         <div class="form-group">
+          <label class="form-label">Jenis Kloset yang Digunakan<span class="req">*</span></label>
+          <select name="jenis_kloset" class="form-select" required>
+            <option value="">-- Pilih Jenis Kloset --</option>
+            <option value="1. Leher angsa" ${initialData?.jenis_kloset === '1. Leher angsa' || initialData?.jenis_kloset === 'Leher angsa' || initialData?.jenis_kloset === '1' || !initialData?.jenis_kloset ? 'selected' : ''}>1. Leher angsa</option>
+            <option value="2. Plengsengan dengan tutup" ${initialData?.jenis_kloset === '2. Plengsengan dengan tutup' || initialData?.jenis_kloset === 'Plengsengan dengan tutup' || initialData?.jenis_kloset === '2' ? 'selected' : ''}>2. Plengsengan dengan tutup</option>
+            <option value="3. Plengsengan tanpa tutup" ${initialData?.jenis_kloset === '3. Plengsengan tanpa tutup' || initialData?.jenis_kloset === 'Plengsengan tanpa tutup' || initialData?.jenis_kloset === '3' ? 'selected' : ''}>3. Plengsengan tanpa tutup</option>
+            <option value="4. Cemplung/ceduk" ${initialData?.jenis_kloset === '4. Cemplung/ceduk' || initialData?.jenis_kloset === 'Cemplung/ceduk' || initialData?.jenis_kloset === '4' ? 'selected' : ''}>4. Cemplung/ceduk</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Tempat Pembuangan Akhir Tinja<span class="req">*</span></label>
+          <select name="tpa_tinja" class="form-select" required>
+            <option value="">-- Pilih Tempat Pembuangan Akhir Tinja --</option>
+            <option value="1. Tangki septik" ${initialData?.tpa_tinja === '1. Tangki septik' || initialData?.tpa_tinja === 'Tangki septik' || initialData?.tpa_tinja === '1' ? 'selected' : ''}>1. Tangki septik</option>
+            <option value="2. Instalasi Pengolahan Air Limbah (IPAL)" ${initialData?.tpa_tinja === '2. Instalasi Pengolahan Air Limbah (IPAL)' || initialData?.tpa_tinja === 'Instalasi Pengolahan Air Limbah (IPAL)' || initialData?.tpa_tinja === 'IPAL' || initialData?.tpa_tinja === '2' ? 'selected' : ''}>2. Instalasi Pengolahan Air Limbah (IPAL)</option>
+            <option value="3. Kolam/sawah/sungai/danau/laut" ${initialData?.tpa_tinja === '3. Kolam/sawah/sungai/danau/laut' || initialData?.tpa_tinja === 'Kolam/sawah/sungai/danau/laut' || initialData?.tpa_tinja === '3' ? 'selected' : ''}>3. Kolam/sawah/sungai/danau/laut</option>
+            <option value="4. Lubang tanah" ${initialData?.tpa_tinja === '4. Lubang tanah' || initialData?.tpa_tinja === 'Lubang tanah' || initialData?.tpa_tinja === '4' ? 'selected' : ''}>4. Lubang tanah</option>
+            <option value="5. Pantai/tanah lapang/kebun" ${initialData?.tpa_tinja === '5. Pantai/tanah lapang/kebun' || initialData?.tpa_tinja === 'Pantai/tanah lapang/kebun' || initialData?.tpa_tinja === '5' ? 'selected' : ''}>5. Pantai/tanah lapang/kebun</option>
+            <option value="6. Lainnya" ${initialData?.tpa_tinja === '6. Lainnya' || initialData?.tpa_tinja === 'Lainnya' || initialData?.tpa_tinja === '6' ? 'selected' : ''}>6. Lainnya</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Sumber Air Minum Utama<span class="req">*</span></label>
           <select name="sumber_air" class="form-select" required>
             <option value="">-- Pilih Sumber Air Minum --</option>
@@ -289,6 +315,15 @@ export function renderStep2(initialData) {
 
       <div class="form-grid-2">
         <div class="form-group">
+          <label class="form-label">Posisi Rumah Berada di Zona Sempadan Sungai<span class="req">*</span></label>
+          <select name="sempadan_sungai" class="form-select" required>
+            <option value="">-- Pilih Posisi Sempadan Sungai --</option>
+            <option value="Ya (< 6 meter / Rawan)" ${initialData?.sempadan_sungai === 'Ya (< 6 meter / Rawan)' || initialData?.sempadan_sungai === 'Ya' || String(initialData?.sempadan_sungai || '').startsWith('Ya') ? 'selected' : ''}>Ya (&lt; 6 meter / Rawan)</option>
+            <option value="Tidak (≥ 6 meter / Aman)" ${initialData?.sempadan_sungai === 'Tidak (≥ 6 meter / Aman)' || initialData?.sempadan_sungai === 'Tidak' || String(initialData?.sempadan_sungai || '').startsWith('Tidak') ? 'selected' : ''}>Tidak (&ge; 6 meter / Aman)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Pencahayaan</label>
           <select name="pencahayaan" class="form-select" required>
             <option value="baik" ${initialData?.pencahayaan === 'baik' ? 'selected' : ''}>A. Terang normal pada siang hari</option>
@@ -296,7 +331,9 @@ export function renderStep2(initialData) {
             <option value="buruk" ${initialData?.pencahayaan === 'buruk' ? 'selected' : ''}>C. Gelap / perlu lampu siang hari</option>
           </select>
         </div>
+      </div>
 
+      <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label">Penghawaan <span class="req">*</span></label>
           <select name="penghawaan" class="form-select" required>
@@ -336,7 +373,8 @@ export function renderStep3(initialData) {
   const photoSlots = [
     { id: 'depan', title: '1. Foto Tampak Depan*' },
     { id: 'dalam', title: '2. Dinding & Lantai Interior' },
-    { id: 'atap', title: '3. Atap & Rangka Struktur' },
+    { id: 'atap', title: '3. Foto Atap & Rangka Struktur' },
+    { id: 'sanitasi', title: '4. Foto Jamban & Sanitasi' }
   ];
 
   return `

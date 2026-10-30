@@ -144,22 +144,12 @@ async function handleRegister(req, res) {
       });
     }
 
-    // 2. Validasi kebijakan 1 RW 1 Petugas
+    // 2. Format RW dan Wilayah Tugas
     if (role === "petugas" && rw) {
       const rwPad = String(rw).padStart(2, "0");
-      const [dupWilayah] = await pool.query(
-        "SELECT id, nama FROM users WHERE role = 'petugas' AND LPAD(TRIM(rw), 2, '0') = ? AND status != 'REJECTED' LIMIT 1",
-        [rwPad]
-      );
-      if (dupWilayah.length > 0) {
-        return res.status(409).json({
-          success: false,
-          message: `Wilayah RW ${rwPad} sudah ditugaskan kepada petugas ${dupWilayah[0].nama}. Berdasarkan kebijakan sistem, setiap 1 RW hanya dapat ditugaskan kepada 1 Petugas Lapangan.`
-        });
-      }
       rw = rwPad;
       if (!wilayah_tugas) {
-        wilayah_tugas = `RW ${rwPad} (Seluruh RT)`;
+        wilayah_tugas = rt ? `RW ${rwPad} (RT ${rt})` : `RW ${rwPad}`;
       }
     }
 

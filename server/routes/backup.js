@@ -237,9 +237,9 @@ async function handleDownloadZip(req, res) {
       "Status Rumah", "Aset Rumah Lain", "Status Tanah",
       "Skor Kelayakan", "Kategori Kelayakan",
       "1. Pondasi", "2. Sloof", "3. Kolom", "4. Ring Balok", "5. Rangka Atap",
-      "6. Dinding", "7. Lantai", "8. Penutup Atap", "9. Fasilitas Sanitasi",
+      "6. Dinding", "7. Lantai", "8. Penutup Atap", "9. Fasilitas Sanitasi", "Jenis Kloset", "Tempat Pembuangan Akhir Tinja",
       "10. Sumber Air Minum", "11. Pencahayaan", "12. Penghawaan",
-      "13. Luas Bangunan (m2)", "Luas Lantai per Jiwa (m2/jiwa)",
+      "13. Luas Bangunan (m2)", "Luas Lantai per Jiwa (m2/jiwa)", "Zona Sempadan Sungai",
       "SPAL", "Sumber Listrik",
       "Latitude", "Longitude", "Akurasi GPS (m)",
       "Status Verifikasi", "Catatan Admin", "Program Bantuan"
@@ -279,11 +279,14 @@ async function handleDownloadZip(req, res) {
         item.lantai ?? "",
         item.atap ?? "",
         item.sanitasi ?? "",
+        item.jenis_kloset ?? "",
+        item.tpa_tinja ?? "",
         item.sumber_air ?? "",
         item.pencahayaan ?? "",
         item.penghawaan ?? "",
         item.luas_bangunan ?? "",
         item.luas_per_jiwa ?? "",
+        item.sempadan_sungai ?? "",
         item.spal ?? "",
         item.sumber_listrik ?? "",
         item.latitude ?? "",
@@ -450,6 +453,9 @@ async function handleRestore(req, res) {
         await connection.beginTransaction();
         let surveyCount = 0;
 
+        const [dbCols] = await connection.query("DESCRIBE surveys");
+        const actualDbCols = new Set(dbCols.map(c => c.Field));
+
         const cols = [
           "id", "no_urut_bnba", "created_by", "petugas_nama", "petugas_id", "tanggal_survey",
           "nik", "no_kk", "nama_kk", "jenis_kelamin", "usia", "lama_tinggal",
@@ -457,8 +463,8 @@ async function handleRestore(req, res) {
           "pekerjaan", "penghasilan", "penghasilan_nominal", "nilai_umk", "bansos_diterima",
           "status_rumah", "aset_rumah_lain", "status_tanah", "skor_total", "kategori_kelayakan",
           "kategori_label", "status_color", "rekomendasi_sistem", "pondasi", "sloof", "kolom",
-          "ring_balok", "rangka_atap", "atap", "dinding", "lantai", "ventilasi", "sanitasi",
-          "sumber_air", "sumber_listrik", "spal", "luas_bangunan", "luas_per_jiwa", "catatan_surveyor",
+          "ring_balok", "rangka_atap", "atap", "dinding", "lantai", "ventilasi", "sanitasi", "jenis_kloset", "tpa_tinja",
+          "sumber_air", "sumber_listrik", "spal", "luas_bangunan", "luas_per_jiwa", "sempadan_sungai", "catatan_surveyor",
           "status_verifikasi", "catatan_admin", "program_bantuan", "latitude", "longitude", "akurasi_gps"
         ];
 
@@ -469,7 +475,7 @@ async function handleRestore(req, res) {
           const updates = [];
 
           for (const c of cols) {
-            if (Object.prototype.hasOwnProperty.call(s, c)) {
+            if (actualDbCols.has(c) && Object.prototype.hasOwnProperty.call(s, c)) {
               fields.push(`\`${c}\``);
               values.push(typeof s[c] === "object" && s[c] !== null ? JSON.stringify(s[c]) : s[c]);
               updates.push(`\`${c}\` = VALUES(\`${c}\`)`);

@@ -547,13 +547,11 @@ export function bindLoginEvents(container, { onLoginSuccess }) {
       option.value = rwVal;
       const assignedTo = takenRwMap[rwVal];
       if (assignedTo) {
-        option.disabled = true;
-        option.textContent = `RW ${rwVal} (${totalRt} RT) — [Sudah Ditugaskan: ${assignedTo}]`;
-        option.style.color = "#9ca3af";
+        option.textContent = `RW ${rwVal} (${totalRt} RT) — [Petugas Terdaftar: ${assignedTo}]`;
       } else {
         option.textContent = `RW ${rwVal} (Mencakup ${totalRt} RT) — Tersedia`;
-        if (!firstAvailableRw) firstAvailableRw = rwVal;
       }
+      if (!firstAvailableRw) firstAvailableRw = rwVal;
       regRwSelect.appendChild(option);
     }
 

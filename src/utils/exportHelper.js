@@ -14,6 +14,7 @@ function escapeHtml(str) {
 }
 
 function downloadBlob(blob, filename) {
+  if (typeof document === "undefined") return;
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.style.display = "none";
@@ -108,12 +109,15 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
     "KONDISI DINDING",
     "KONDISI LANTAI",
     "FASILITAS SANITASI",
+    "JENIS KLOSET",
+    "TEMPAT PEMBUANGAN AKHIR TINJA",
     "SUMBER AIR MINUM",
     "PENCAHAYAAN ALAMI",
     "PENGHAWAAN VENTILASI",
     "LUAS BANGUNAN (M2)",
     "LUAS LANTAI PER JIWA (M2)",
     "KECUKUPAN RUANG",
+    "ZONA SEMPADAN SUNGAI",
     "SPAL",
     "SUMBER LISTRIK",
     "KOORDINAT LATITUDE",
@@ -164,12 +168,15 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
       item.dinding || "-",
       item.lantai || "-",
       item.sanitasi || "-",
+      item.jenis_kloset || "-",
+      item.tpa_tinja || "-",
       item.sumber_air || "-",
       item.pencahayaan || "-",
       item.penghawaan || "-",
       luas,
       perJiwa,
       kecukupan,
+      item.sempadan_sungai || "-",
       item.spal || "-",
       item.sumber_listrik || "PLN",
       item.latitude || "",
@@ -187,6 +194,7 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
   const rwTag = meta.rwFilter === "ALL" || !meta.rwFilter ? "SEMUA_RW" : `RW_${String(meta.rwFilter).padStart(2, "0")}`;
   const filename = `SIPELITA_DATA_RUMAH_${rwTag}_${new Date().toISOString().slice(0, 10)}.csv`;
   downloadBlob(blob, filename);
+  return csvContent;
 }
 
 /**
@@ -204,8 +212,8 @@ export function exportSurveysToExcel(surveys, meta = {}) {
     "PEKERJAAN UTAMA", "PENGHASILAN", "NOMINAL PENGHASILAN (RP)",
     "STATUS RUMAH", "ASET RUMAH LAIN", "STATUS TANAH",
     "PONDASI", "SLOOF", "KOLOM", "RING BALOK", "RANGKA ATAP", "PENUTUP ATAP",
-    "DINDING", "LANTAI", "SANITASI", "SUMBER AIR", "PENCAHAYAAN", "PENGHAWAAN",
-    "LUAS BGN (M2)", "LUAS/JIWA (M2)", "KECUKUPAN RUANG",
+    "DINDING", "LANTAI", "SANITASI", "JENIS KLOSET", "TPA TINJA", "SUMBER AIR", "PENCAHAYAAN", "PENGHAWAAN",
+    "LUAS BGN (M2)", "LUAS/JIWA (M2)", "KECUKUPAN RUANG", "SEMPADAN SUNGAI",
     "SPAL", "LISTRIK", "LATITUDE", "LONGITUDE", "AKURASI GPS (M)",
     "STATUS VERIFIKASI", "CATATAN ADMIN / VERIFIKATOR"
   ];
@@ -255,12 +263,15 @@ export function exportSurveysToExcel(surveys, meta = {}) {
         <td class="td-cell">${escapeHtml(item.dinding || "-")}</td>
         <td class="td-cell">${escapeHtml(item.lantai || "-")}</td>
         <td class="td-cell">${escapeHtml(item.sanitasi || "-")}</td>
+        <td class="td-cell">${escapeHtml(item.jenis_kloset || "-")}</td>
+        <td class="td-cell">${escapeHtml(item.tpa_tinja || "-")}</td>
         <td class="td-cell">${escapeHtml(item.sumber_air || "-")}</td>
         <td class="td-cell">${escapeHtml(item.pencahayaan || "-")}</td>
         <td class="td-cell">${escapeHtml(item.penghawaan || "-")}</td>
         <td class="td-number">${luas}</td>
         <td class="td-number">${perJiwa}</td>
         <td class="td-center">${escapeHtml(kecukupan)}</td>
+        <td class="td-cell">${escapeHtml(item.sempadan_sungai || "-")}</td>
         <td class="td-cell">${escapeHtml(item.spal || "-")}</td>
         <td class="td-cell">${escapeHtml(item.sumber_listrik || "PLN")}</td>
         <td class="td-number">${item.latitude || ""}</td>
@@ -335,5 +346,6 @@ export function exportSurveysToExcel(surveys, meta = {}) {
   const rwTag = meta.rwFilter === "ALL" || !meta.rwFilter ? "SEMUA_RW" : `RW_${String(meta.rwFilter).padStart(2, "0")}`;
   const filename = `SIPELITA_DATA_RUMAH_${rwTag}_${new Date().toISOString().slice(0, 10)}.xls`;
   downloadBlob(blob, filename);
+  return html;
 }
 

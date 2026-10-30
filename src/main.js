@@ -115,10 +115,10 @@ function render() {
     contentContainer.innerHTML = renderSurveyForm(editData);
     initSurveyFormEvents(contentContainer, {
       onSaveSuccess: (saved) => {
-        showToast(`Data survey rumah Bapak/Ibu ${saved.nama_kk} berhasil disimpan!`);
+        showToast(`Data survey rumah Bapak/Ibu ${saved.nama_kk || ''} berhasil disimpan ke database!`);
         state.editingSurveyId = null;
         state.activeTab = "surveys";
-        render();
+        storage.syncSurveysFromDB().then(() => render());
       },
       onCancel: () => {
         state.editingSurveyId = null;

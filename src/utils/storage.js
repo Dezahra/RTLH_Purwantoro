@@ -301,17 +301,22 @@ export const storage = {
       const resData = await response.json();
       if (!resData.success) {
         console.warn("Peringatan MySQL save_survey:", resData.message);
-        if (response.status === 409) {
-          throw new Error(resData.message);
-        }
+        throw new Error(resData.message || "Gagal menyimpan perubahan ke basis data.");
       }
     } catch (err) {
       console.error("Gagal kirim survei ke MySQL:", err);
-      // Jika terjadi duplikasi NIK, lemparkan error ke form
-      if (err.message && err.message.includes("sudah terdata sebelumnya")) {
+      const msg = err.message || "";
+      // Jika terjadi duplikasi NIK atau kesalahan validasi dari server, lemparkan error agar pengguna mengetahui
+      if (
+        msg.includes("sudah terdata") || 
+        msg.includes("sudah digunakan") ||
+        msg.includes("NIK") ||
+        msg.includes("basis data") ||
+        msg.includes("SQL")
+      ) {
         throw err;
       }
-      // Jika offline atau kegagalan jaringan, simpan ke antrean draft offline
+      // Jika murni masalah jaringan / server offline (fetch failed / NetworkError)
       this.saveOfflineDraft(enriched);
       return { ...enriched, _is_offline: true };
     }
@@ -795,9 +800,9 @@ export const storage = {
       "Pekerjaan", "Penghasilan", "Penghasilan Nominal", "Nilai UMK",
       "Status Rumah", "Aset Rumah Lain", "Status Tanah",
       "1. Pondasi", "2. Sloof", "3. Kolom", "4. Ring Balok", "5. Rangka Atap",
-      "6. Dinding", "7. Lantai", "8. Penutup Atap", "9. Fasilitas Sanitasi",
+      "6. Dinding", "7. Lantai", "8. Penutup Atap", "9. Fasilitas Sanitasi", "Jenis Kloset", "Tempat Pembuangan Akhir Tinja",
       "10. Sumber Air Minum", "11. Pencahayaan", "12. Penghawaan",
-      "13. Luas Bangunan (m2)", "Luas Lantai per Jiwa (m2/jiwa)",
+      "13. Luas Bangunan (m2)", "Luas Lantai per Jiwa (m2/jiwa)", "Zona Sempadan Sungai",
       "SPAL", "Sumber Listrik",
       "Latitude", "Longitude", "Akurasi GPS (m)",
       "Status Verifikasi", "Catatan Admin"
@@ -833,11 +838,14 @@ export const storage = {
       `"${item.lantai || ""}"`,
       `"${item.atap || ""}"`,
       `"${item.sanitasi || ""}"`,
+      `"${item.jenis_kloset || ""}"`,
+      `"${item.tpa_tinja || ""}"`,
       `"${item.sumber_air || ""}"`,
       `"${item.pencahayaan || ""}"`,
       `"${item.penghawaan || ""}"`,
       `"${item.luas_bangunan || ""}"`,
       `"${item.luas_per_jiwa || ""}"`,
+      `"${item.sempadan_sungai || ""}"`,
       `"${item.spal || ""}"`,
       `"${item.sumber_listrik || ""}"`,
       `"${item.latitude || ""}"`,
@@ -1077,9 +1085,12 @@ export const storage = {
       "KONDISI_DINDING_TERLUAS",
       "KONDISI_LANTAI_TERLUAS",
       "FASILITAS_JAMBAN_SANITASI",
+      "JENIS_KLOSET",
+      "TEMPAT_PEMBUANGAN_AKHIR_TINJA",
       "SUMBER_AIR_MINUM",
       "PENCAHAYAAN_ALAMI",
       "PENGHAWAAN_VENTILASI",
+      "ZONA_SEMPADAN_SUNGAI",
       "SUMBER_LISTRIK",
       "KOORDINAT_LATITUDE",
       "KOORDINAT_LONGITUDE",
@@ -1130,9 +1141,12 @@ export const storage = {
         `"${item.dinding || '-'}"`,
         `"${item.lantai || '-'}"`,
         `"${item.sanitasi || '-'}"`,
+        `"${item.jenis_kloset || '-'}"`,
+        `"${item.tpa_tinja || '-'}"`,
         `"${item.sumber_air || '-'}"`,
         `"${item.pencahayaan || '-'}"`,
         `"${item.penghawaan || '-'}"`,
+        `"${item.sempadan_sungai || '-'}"`,
         `"${item.sumber_listrik || 'PLN'}"`,
         item.latitude || '',
         item.longitude || '',

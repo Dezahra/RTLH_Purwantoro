@@ -711,15 +711,15 @@ export function initMemberManagementEvents(container, { showToast, onStateChange
       if (isCurrent) {
         return `<option value="${rwNum}" selected>RW ${rwNum} (Wilayah Tugas Saat Ini)</option>`;
       } else if (assignedTo) {
-        return `<option value="${rwNum}" disabled style="color:#9ca3af; background:#f9fafb;">RW ${rwNum} — [Sudah Ditugaskan: ${assignedTo}]</option>`;
+        return `<option value="${rwNum}">RW ${rwNum} (Termasuk: ${assignedTo})</option>`;
       } else {
-        return `<option value="${rwNum}">RW ${rwNum} (Tersedia - 1 RW 1 Petugas)</option>`;
+        return `<option value="${rwNum}">RW ${rwNum} (Tersedia)</option>`;
       }
     }).join('')}
                   </select>
                 </div>
                 <small style="font-size:0.72rem; color:var(--dark-500); display:block; margin-top:0.35rem;">
-                  ℹ️ Berdasarkan kebijakan sistem, setiap 1 RW hanya dapat ditugaskan kepada 1 Petugas Lapangan.
+                  ℹ️ Petugas dapat ditugaskan ke wilayah RW yang sama untuk mencakup RT binaan yang berbeda.
                 </small>
               </div>
 

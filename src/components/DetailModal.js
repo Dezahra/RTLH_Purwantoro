@@ -167,7 +167,10 @@ export function renderDetailModal(survey) {
                 <div><span style="color:var(--dark-500);">Luas Bangunan:</span> ${survey.luas_bangunan} m² (${survey.luas_per_jiwa} m²/jiwa)</div>
                 <div><span style="color:var(--dark-500);">Ventilasi:</span> ${survey.ventilasi}</div>
                 <div><span style="color:var(--dark-500);">Sanitasi & Jamban:</span> <strong>${survey.sanitasi}</strong></div>
+                <div><span style="color:var(--dark-500);">Jenis Kloset:</span> <strong>${survey.jenis_kloset || '-'}</strong></div>
+                <div><span style="color:var(--dark-500);">TPA Tinja:</span> <strong>${survey.tpa_tinja || '-'}</strong></div>
                 <div><span style="color:var(--dark-500);">Sumber Air:</span> ${survey.sumber_air}</div>
+                <div><span style="color:var(--dark-500);">Sempadan Sungai:</span> <strong>${survey.sempadan_sungai || '-'}</strong></div>
                 <div><span style="color:var(--dark-500);">Listrik:</span> ${survey.sumber_listrik || '-'}</div>
               </div>
             </div>
