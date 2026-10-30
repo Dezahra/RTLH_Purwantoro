@@ -152,10 +152,6 @@ export function renderLogin() {
               </button>
             </form>
 
-            <div class="demo-account-hint" id="demo-account-hint">
-              <span>Akun terdaftar: username <strong>${selectedLoginRole === 'admin' ? 'admin' : 'petugas'}</strong> • sandi: <strong>password123</strong></span>
-            </div>
-
             <div class="auth-switch-link" style="margin-top: 1rem;">
               <span>Belum memiliki akun?</span>
               <button type="button" class="btn-link-text" id="link-form-register">Daftar Akun Baru</button>
@@ -379,13 +375,11 @@ export function bindLoginEvents(container, { onLoginSuccess }) {
       loginFormSubheading.textContent = "";
       labelRoleIdentifier.textContent = "Username atau NIP Pegawai";
       roleLoginIdentifier.placeholder = "Masukkan username";
-      demoAccountHint.innerHTML = "<span>Akun terdaftar: username <strong>admin</strong> • sandi: <strong>password123</strong></span>";
     } else {
       loginFormHeading.textContent = "Login Petugas Lapangan";
       loginFormSubheading.textContent = "";
       labelRoleIdentifier.textContent = "Username atau ID Petugas";
       roleLoginIdentifier.placeholder = "Masukkan username";
-      demoAccountHint.innerHTML = "<span>Akun terdaftar: username <strong>petugas</strong> • sandi: <strong>password123</strong></span>";
     }
 
     roleLoginIdentifier.value = "";
