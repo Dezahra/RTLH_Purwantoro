@@ -337,7 +337,6 @@ export function renderStep3(initialData) {
     { id: 'depan', title: '1. Foto Tampak Depan*' },
     { id: 'dalam', title: '2. Dinding & Lantai Interior' },
     { id: 'atap', title: '3. Atap & Rangka Struktur' },
-    { id: 'sanitasi', title: '4. Sanitasi / Jamban' }
   ];
 
   return `

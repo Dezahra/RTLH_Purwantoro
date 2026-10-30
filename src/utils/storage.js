@@ -1,6 +1,8 @@
 import { calculateHousingEligibility } from "./calculator.js";
 
-const API_BASE = "/src/data/api";
+const API_BASE = (typeof window !== "undefined" && window.location.port === "5173")
+  ? "http://localhost:8000/src/data/api"
+  : "/src/data/api";
 const STORAGE_KEY = "sipelita_desa_surveys_v1";
 const ROLE_KEY = "sipelita_desa_role";
 const REGISTERED_USERS_KEY = "sipelita_desa_registered_users_v2";

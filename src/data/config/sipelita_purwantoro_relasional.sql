@@ -1,8 +1,3 @@
--- ========================================================================
--- STRUKTUR DATABASE TERELASI SIPELITA KELURAHAN PURWANTORO
--- Kota Malang, Kecamatan Blimbing, Kelurahan Purwantoro
--- Versi: 2.0 (Relasi Lengkap Antar Seluruh Tabel / Full Foreign Keys)
--- ========================================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `survey_parameter_scores`;
