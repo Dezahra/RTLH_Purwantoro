@@ -307,21 +307,36 @@ export function renderPrintReport(survey) {
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">10</td>
+                <td style="border: 1px solid #000; padding: 2px 8px;">Jenis Kloset yang Digunakan</td>
+                <td style="border: 1px solid #000; padding: 2px 8px;">${survey.jenis_kloset || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">11</td>
+                <td style="border: 1px solid #000; padding: 2px 8px;">Tempat Pembuangan Akhir Tinja</td>
+                <td style="border: 1px solid #000; padding: 2px 8px;">${survey.tpa_tinja || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">12</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">Sumber Air Minum Utama</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">${formatSumberAir(survey.sumber_air)}</td>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">11</td>
+                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">13</td>
+                <td style="border: 1px solid #000; padding: 2px 8px;">Posisi Sempadan Sungai</td>
+                <td style="border: 1px solid #000; padding: 2px 8px;">${survey.sempadan_sungai || '-'}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">14</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">Pencahayaan</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">${formatPencahayaan(survey.pencahayaan)}</td>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">12</td>
+                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">15</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">Penghawaan</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">${formatPenghawaan(survey.penghawaan || survey.ventilasi)}</td>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">13</td>
+                <td style="border: 1px solid #000; padding: 2px 5px; text-align: center;">16</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">Luas Lantai / Kecukupan Ruang</td>
                 <td style="border: 1px solid #000; padding: 2px 8px;">${survey.luas_bangunan || '-'} m² (${survey.luas_per_jiwa || '-'} m²/jiwa)</td>
               </tr>

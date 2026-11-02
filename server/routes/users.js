@@ -20,7 +20,10 @@ async function handleGetUsers(req, res) {
              u.rejected_at, u.reject_reason, u.rejected_by
       FROM users u
       LEFT JOIN rt_rws r ON u.rt_rw_id = r.id
-      ORDER BY u.id DESC
+      ORDER BY 
+        CASE WHEN u.role = 'admin' THEN 0 WHEN u.role = 'pegawai' THEN 1 ELSE 2 END,
+        CAST(u.rw AS UNSIGNED) ASC,
+        u.id ASC
     `);
 
     res.json({
@@ -98,24 +101,12 @@ async function handleUpdateStatus(req, res) {
       }
       const rwPad = String(newRw).padStart(2, "0");
 
-      // Cek apakah RW sudah ditugaskan ke petugas lain yang aktif
-      const [existing] = await pool.query(
-        "SELECT id, nama FROM users WHERE role = 'petugas' AND LPAD(TRIM(rw), 2, '0') = ? AND id != ? AND status != 'REJECTED' LIMIT 1",
-        [rwPad, id]
-      );
-
-      if (existing.length > 0) {
-        return res.status(409).json({
-          success: false,
-          message: `Wilayah RW ${rwPad} sudah ditugaskan kepada petugas ${existing[0].nama}. Berdasarkan aturan 1 RW 1 Petugas, silakan pilih RW yang masih tersedia.`
-        });
-      }
-
+      const newWilayah = data.wilayah_tugas || `RW ${rwPad}`;
       await pool.query(
-        "UPDATE users SET rw = ?, rt = 'Semua', wilayah_tugas = ?, updated_at = NOW() WHERE id = ?",
-        [rwPad, `RW ${rwPad} (Seluruh RT)`, id]
+        "UPDATE users SET rw = ?, rt = COALESCE(?, rt, 'Semua'), wilayah_tugas = ?, updated_at = NOW() WHERE id = ?",
+        [rwPad, data.rt, newWilayah, id]
       );
-      msg = `Wilayah penugasan petugas berhasil diubah ke RW ${rwPad} (Seluruh RT).`;
+      msg = `Wilayah penugasan petugas berhasil diubah ke RW ${rwPad}.`;
     } else {
       return res.status(400).json({ success: false, message: "Aksi tidak dikenali." });
     }

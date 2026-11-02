@@ -1,6 +1,7 @@
 import { icons } from "../utils/icons.js";
 import { storage, isSurveyOwnedByPetugas } from "../utils/storage.js";
 import { masterRtRwPurwantoro } from "../utils/rtrw.js";
+import { renderExportModal, initExportModalEvents } from "./ExportModal.js";
 
 export function renderSurveyList() {
   const currentRole = storage.getCurrentRole();
@@ -21,6 +22,9 @@ export function renderSurveyList() {
         </div>
 
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" id="btn-export-surveys-excel" style="background:#059669; color:white; border-color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 0.85rem; border-radius:var(--radius-md); box-shadow:0 1px 3px rgba(0,0,0,0.1);" title="Ekspor Data Rumah ke Berkas Excel / CSV Lengkap dengan Kop Dokumen">
+            ${icons.download('w-4 h-4')} Ekspor Data
+          </button>
           ${!isPetugas ? `
             <button class="btn btn-secondary btn-sm" id="btn-list-rekap-bnba" style="background:#047857; color:white; border-color:#047857; font-weight:700;">
               ${icons.printer('w-4 h-4')} Cetak Rekap BNBA
@@ -55,7 +59,7 @@ export function renderSurveyList() {
 
           <!-- Filter Rentang Tanggal Survei -->
           <select class="form-select" id="list-filter-date" style="width:auto; padding:0.55rem 0.85rem;" title="Filter berdasarkan tanggal pelaksanaan survei">
-            <option value="ALL">📅 Semua Tanggal</option>
+            <option value="ALL">Semua Tanggal</option>
             <option value="TODAY">Hari Ini</option>
             <option value="THIS_WEEK">7 Hari Terakhir</option>
             <option value="THIS_MONTH">Bulan Ini</option>
@@ -169,6 +173,35 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       if (typeof onPrintRekap === "function") {
         onPrintRekap(selectedRw);
       }
+    });
+  }
+
+  // Ekspor Data Rumah (Excel / CSV) dengan KOP Dokumen Resmi
+  const exportBtn = container.querySelector("#btn-export-surveys-excel");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      const modalRoot = document.getElementById("modal-root");
+      if (!modalRoot) return;
+
+      const currentFilters = {
+        rw: filterRw ? filterRw.value : "ALL",
+        rt: filterRt ? filterRt.value : "ALL",
+        verif: filterVerif ? filterVerif.value : "ALL"
+      };
+
+      modalRoot.innerHTML = renderExportModal({
+        filteredSurveys: lastFilteredSurveys,
+        currentFilters
+      });
+
+      initExportModalEvents({
+        filteredSurveys: lastFilteredSurveys,
+        currentFilters,
+        onClose: () => {
+          modalRoot.innerHTML = "";
+        },
+        showToast
+      });
     });
   }
 

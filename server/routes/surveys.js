@@ -13,7 +13,8 @@ async function handleGetSurveys(req, res) {
       SELECT s.*, 
              r.label AS rtrw_label, 
              u.nama AS surveyor_nama,
-             u.jabatan AS surveyor_jabatan
+             u.jabatan AS surveyor_jabatan,
+             COALESCE(u.id_petugas, s.created_by) AS petugas_id
       FROM surveys s
       LEFT JOIN rt_rws r ON s.rt_rw_id = r.id
       LEFT JOIN users u ON s.created_by = u.id
@@ -87,24 +88,37 @@ async function handleSaveSurvey(req, res) {
   }
 
   try {
-    const isNew = !data.id;
     const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    let isNew = !data.id;
+    let oldRows = [];
+
+    if (data.id) {
+      [oldRows] = await pool.query("SELECT status_verifikasi, catatan_admin FROM surveys WHERE id = ? LIMIT 1", [data.id]);
+      if (oldRows.length === 0) {
+        isNew = true;
+      }
+    }
 
     if (isNew) {
-      data.id = "SRV-" + new Date().getFullYear() + "-" + crypto.randomBytes(3).toString("hex").toUpperCase();
+      if (!data.id) {
+        data.id = "SRV-" + new Date().getFullYear() + "-" + crypto.randomBytes(3).toString("hex").toUpperCase();
+      }
       data.status_verifikasi = data.status_verifikasi || "MENUNGGU_VALIDASI";
       data.created_at = now;
     } else {
       // Auto-transition dari BUTUH_REVISI ke MENUNGGU_VALIDASI saat diperbaiki
-      const [oldRows] = await pool.query("SELECT status_verifikasi, catatan_admin FROM surveys WHERE id = ? LIMIT 1", [data.id]);
       if (oldRows.length > 0 && oldRows[0].status_verifikasi === "BUTUH_REVISI") {
         data.status_verifikasi = "MENUNGGU_VALIDASI";
         data.revision_at = now;
         const existingNote = oldRows[0].catatan_admin || "";
         const stamp = new Date().toLocaleDateString("id-ID") + " " + new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
         data.catatan_admin = `[Diperbaiki Petugas ${stamp}] ${existingNote}`;
+      } else if (!data.status_verifikasi && oldRows.length > 0) {
+        data.status_verifikasi = oldRows[0].status_verifikasi;
       }
     }
+
+    data.status_verifikasi = data.status_verifikasi || "MENUNGGU_VALIDASI";
 
     // Validasi NIK & Duplikasi di Database
     const nik = (data.nik || "").trim();
@@ -160,6 +174,13 @@ async function handleSaveSurvey(req, res) {
       }
     }
 
+    if (!validUserId && !isNew) {
+      const [oldCreatorRows] = await pool.query("SELECT created_by FROM surveys WHERE id = ? LIMIT 1", [data.id]);
+      if (oldCreatorRows.length > 0 && oldCreatorRows[0].created_by) {
+        validUserId = oldCreatorRows[0].created_by;
+      }
+    }
+
     data.created_by = validUserId;
     if (!data.petugas_nama) {
       data.petugas_nama = namaPetugas || data.nama || "Petugas Lapangan";
@@ -167,6 +188,8 @@ async function handleSaveSurvey(req, res) {
 
     if (!data.tanggal_survey) {
       data.tanggal_survey = now.slice(0, 10);
+    } else {
+      data.tanggal_survey = String(data.tanggal_survey).slice(0, 10);
     }
 
     // Sanitasi UMK & Nominal
@@ -185,6 +208,12 @@ async function handleSaveSurvey(req, res) {
 
     data.aset_rumah_lain = data.aset_rumah_lain || "Tidak";
     data.lama_tinggal = parseInt(data.lama_tinggal || 1, 10);
+    data.alamat_lengkap = data.alamat_lengkap || data.dusun || null;
+    data.jumlah_lansia_balita = parseInt(data.jumlah_lansia_balita || 0, 10);
+    data.bansos_diterima = data.bansos_diterima || "Belum Pernah";
+    data.jenis_kloset = data.jenis_kloset || "1. Leher angsa";
+    data.tpa_tinja = data.tpa_tinja || "1. Tangki septik";
+    data.sempadan_sungai = data.sempadan_sungai || "Tidak (≥ 6 meter / Aman)";
 
     // Resolusi rt_rw_id
     let rtRwId = null;
@@ -199,25 +228,31 @@ async function handleSaveSurvey(req, res) {
     data.rt_rw_id = rtRwId;
     if (!data.akurasi_gps) data.akurasi_gps = "0";
 
-    // Kolom-kolom tabel surveys
-    const columns = [
+    // Kolom-kolom potensial tabel surveys
+    const candidateColumns = [
       "id", "no_urut_bnba", "tanggal_survey", "created_by", "petugas_nama", "nik", "no_kk", "nama_kk",
-      "jenis_kelamin", "usia", "lama_tinggal", "dusun", "rt", "rw", "rt_rw_id", "jumlah_jiwa", "pekerjaan",
-      "penghasilan", "penghasilan_nominal", "nilai_umk", "status_rumah", "aset_rumah_lain", "status_tanah", "pondasi", "sloof", "kolom",
-      "ring_balok", "rangka_atap", "dinding", "lantai", "atap", "sanitasi",
+      "jenis_kelamin", "usia", "lama_tinggal", "alamat_lengkap", "rt", "rw", "rt_rw_id", "jumlah_jiwa", "jumlah_lansia_balita",
+      "pekerjaan", "penghasilan", "penghasilan_nominal", "nilai_umk",
+      "status_rumah", "aset_rumah_lain", "status_tanah", "bansos_diterima", "pondasi", "sloof", "kolom",
+      "ring_balok", "rangka_atap", "dinding", "lantai", "atap", "sanitasi", "jenis_kloset", "tpa_tinja",
       "sumber_air", "pencahayaan", "penghawaan", "spal", "sumber_listrik",
       "luas_bangunan", "latitude", "longitude", "akurasi_gps", "skor_total", "kategori_kelayakan",
-      "kategori_label", "luas_per_jiwa", "rekomendasi_sistem", "status_verifikasi",
-      "catatan_admin", "program_bantuan", "verified_at", "revision_at",
+      "kategori_label", "luas_per_jiwa", "sempadan_sungai", "rekomendasi_sistem", "status_verifikasi",
+      "catatan_admin", "catatan_surveyor", "program_bantuan", "verified_at", "revision_at",
       "foto_depan", "foto_dalam", "foto_atap", "foto_sanitasi"
     ];
+
+    // Deteksi kolom yang benar-benar ada di tabel surveys MySQL secara dinamis
+    const [dbCols] = await pool.query("DESCRIBE surveys");
+    const actualDbCols = new Set(dbCols.map(c => c.Field));
 
     const insertCols = [];
     const placeholders = [];
     const updateClauses = [];
     const values = [];
 
-    for (const col of columns) {
+    for (const col of candidateColumns) {
+      if (!actualDbCols.has(col)) continue;
       insertCols.push(col);
       placeholders.push("?");
       values.push(data[col] !== undefined ? data[col] : null);
