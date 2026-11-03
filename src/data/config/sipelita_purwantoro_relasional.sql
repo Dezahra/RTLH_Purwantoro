@@ -213,7 +213,7 @@ VALUES (
   'USR-PGW-001',
   'admin',
   'admin',
-  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '$2b$10$90PreEvslTOdndC08owVr.3BqLGdLOXUfEECh4P5ING2.1TfyFPBG',
   'Devi Zahra Safrida',
   '19880415 201201 1 002',
   'ADM-001',
@@ -229,4 +229,4 @@ VALUES (
   NOW(),
   'Sistem Otomatis'
 )
-ON DUPLICATE KEY UPDATE `status` = 'APPROVED';
+ON DUPLICATE KEY UPDATE `password` = VALUES(`password`), `status` = 'APPROVED';

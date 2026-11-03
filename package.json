@@ -10,6 +10,7 @@
     "start": "node server.js",
     "build": "vite build",
     "migrate": "node server/migrate.js",
+    "seed:admin": "node server/seedAdmin.js",
     "preview": "vite preview"
   },
   "devDependencies": {

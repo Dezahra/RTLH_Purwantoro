@@ -39,6 +39,9 @@ services:
       DB_USER: ${DOCKER_DB_USER:-sipelita_admin}
       DB_PASSWORD: ${DOCKER_DB_PASSWORD:-Sipelita2026!}
       DB_NAME: ${DB_NAME:-sipelita_desa}
+      # Akun login admin otomatis ditanam ke Docker saat pertama kali menyala:
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-password123}
     depends_on:
       db:
         condition: service_healthy
