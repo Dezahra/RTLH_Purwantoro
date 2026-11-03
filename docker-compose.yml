@@ -1,0 +1,53 @@
+services:
+  # Service Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: sipelita_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DOCKER_DB_ROOT_PASSWORD:-Sipelita2026!}
+      MYSQL_DATABASE: ${DB_NAME:-sipelita_desa}
+      MYSQL_USER: ${DOCKER_DB_USER:-sipelita_admin}
+      MYSQL_PASSWORD: ${DOCKER_DB_PASSWORD:-Sipelita2026!}
+    ports:
+      # Port MySQL luar diubah ke 3308 (karena 3306 dan 3307 sudah terpakai di laptop)
+      - "3308:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Otomatis import skema relasional saat pertama kali container dijalankan
+      - ./src/data/config/sipelita_purwantoro_relasional.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DOCKER_DB_ROOT_PASSWORD:-Sipelita2026!}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sipelita_net
+
+  # Service Aplikasi SIPELITA (Node.js + Built Vite Frontend)
+  app:
+    build: .
+    container_name: sipelita_app
+    restart: always
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DOCKER_DB_USER:-sipelita_admin}
+      DB_PASSWORD: ${DOCKER_DB_PASSWORD:-Sipelita2026!}
+      DB_NAME: ${DB_NAME:-sipelita_desa}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sipelita_net
+
+volumes:
+  db_data:
+
+networks:
+  sipelita_net:
+    driver: bridge

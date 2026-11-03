@@ -6,16 +6,12 @@ import app, { setupFrontend } from "./server/app.js";
 const PORT = process.env.PORT || 8000;
 
 async function startServer() {
-  // Hubungkan Vite Frontend ke server Express (Unified 1 Port)
+  // Hubungkan route frontend/API
   await setupFrontend(app);
 
   const server = app.listen(PORT, () => {
-    console.log("=================================================");
-    console.log("🚀 SIPELITA UNIFIED SERVER AKTIF (1 PORT SAJA)");
-    console.log(`🌐 Buka di Browser : http://localhost:${PORT}`);
-    console.log(`📡 API Backend     : http://localhost:${PORT}/api/ & /src/data/api/`);
-    console.log(`🗄️  Database MySQL  : ${process.env.DB_NAME || "sipelita_desa"}`);
-    console.log("=================================================");
+    console.log(`Backend API    : http://localhost:${PORT}`);
+    console.log(`Web Frontend   : http://localhost:5173`);
   });
 
   // Graceful shutdown

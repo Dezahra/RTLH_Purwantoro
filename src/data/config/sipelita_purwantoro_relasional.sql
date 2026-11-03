@@ -184,3 +184,49 @@ CREATE TABLE `survey_parameter_scores` (
   CONSTRAINT `fk_scores_survey` FOREIGN KEY (`survey_id`) REFERENCES `surveys` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT `fk_scores_kriteria` FOREIGN KEY (`kriteria_id`) REFERENCES `kriteria_penilaian` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =========================================================
+-- 8. DATA AWAL (SEED DATA): 13 PARAMETER PUPR
+-- =========================================================
+INSERT INTO `kriteria_penilaian` (`id`, `kode`, `nama_parameter`, `pilar`, `bobot_persen`, `standar_kelayakan`) VALUES
+(1, 'pondasi', 'Pondasi Bangunan', 'KESELAMATAN_STRUKTUR', 10.00, 'Pondasi batu kali/beton bertulang kondisi baik tanpa retak struktur.'),
+(2, 'kolom', 'Kolom & Balok', 'KESELAMATAN_STRUKTUR', 15.00, 'Kolom dan balok pengikat kokoh, tidak keropos, dan mampu menopang beban.'),
+(3, 'rangka_atap', 'Rangka Atap', 'KESELAMATAN_STRUKTUR', 10.00, 'Kuda-kuda kayu/baja ringan tidak lapuk, melengkung, atau dimakan rayap.'),
+(4, 'dinding', 'Dinding Pengisi', 'KOMPONEN_BAHAN', 8.00, 'Dinding pasangan bata/plesteran kokoh tanpa retak tembus.'),
+(5, 'lantai', 'Lantai Rumah', 'KOMPONEN_BAHAN', 7.00, 'Lantai keramik/semen kedap air, tidak berupa tanah liat/lembab.'),
+(6, 'atap', 'Penutup Atap', 'KOMPONEN_BAHAN', 10.00, 'Genteng/seng/asbes rapat, tidak bocor saat hujan.'),
+(7, 'sanitasi', 'Fasilitas Sanitasi (Jamban)', 'KESEHATAN_SANITASI', 10.00, 'Jamban leher angsa dengan tangki septik sendiri.'),
+(8, 'sumber_air', 'Akses Air Minum', 'KESEHATAN_SANITASI', 8.00, 'Sumber air terlindung (PDAM/sumur bor) jarak > 10m dari tangki septik.'),
+(9, 'pencahayaan', 'Pencahayaan Alami', 'KESEHATAN_SANITASI', 6.00, 'Bukaan jendela minimal 10% dari luas lantai ruangan.'),
+(10, 'penghawaan', 'Penghawaan / Ventilasi', 'KESEHATAN_SANITASI', 6.00, 'Ventilasi udara minimal 5% dari luas lantai ruangan.'),
+(11, 'spal', 'Saluran Pembuangan Air Limbah', 'KESEHATAN_SANITASI', 5.00, 'Saluran tertutup mengalir lancar ke saluran lingkungan.'),
+(12, 'luas_bangunan', 'Kecukupan Luas Ruang', 'KECUKUPAN_RUANG', 5.00, 'Luas lantai minimal 7.2 m2 per jiwa / penghuni.'),
+(13, 'sumber_listrik', 'Sumber Penerangan / Listrik', 'KESEHATAN_SANITASI', 0.00, 'Listrik PLN mandiri dengan daya mencukupi.')
+ON DUPLICATE KEY UPDATE `nama_parameter` = VALUES(`nama_parameter`);
+
+-- =========================================================
+-- 9. DATA AWAL (SEED DATA): PENGGUNA DEFAULT (ADMIN)
+-- =========================================================
+INSERT INTO `users` (`id`, `role`, `username`, `password`, `nama`, `nip`, `id_petugas`, `jabatan`, `desa`, `kecamatan`, `kabupaten`, `telepon`, `email`, `status`, `avatar`, `registered_at`, `approved_at`, `approved_by`)
+VALUES (
+  'USR-PGW-001',
+  'admin',
+  'admin',
+  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  'Devi Zahra Safrida',
+  '19880415 201201 1 002',
+  'ADM-001',
+  'Kasi Kesejahteraan / Pegawai Kelurahan',
+  'Kelurahan Purwantoro',
+  'Kecamatan Blimbing',
+  'Kota Malang',
+  '081234567890',
+  'zahra@purwantoro.malangkota.go.id',
+  'APPROVED',
+  '🏢',
+  NOW(),
+  NOW(),
+  'Sistem Otomatis'
+)
+ON DUPLICATE KEY UPDATE `status` = 'APPROVED';
