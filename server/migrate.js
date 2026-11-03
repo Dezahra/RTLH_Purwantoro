@@ -23,12 +23,10 @@ async function runMigration() {
   const password = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "";
   const dbName = process.env.DB_NAME || "sipelita_desa";
 
-  console.log("=========================================");
-  console.log("🔄 Menjalankan Migrasi Database SIPELITA");
-  console.log(`🌐 Host     : ${host}:${port}`);
-  console.log(`👤 User     : ${user}`);
-  console.log(`🗄️  Database : ${dbName}`);
-  console.log("=========================================");
+  console.log(" Menjalankan Migrasi Database SIPELITA");
+  console.log(`Host     : ${host}:${port}`);
+  console.log(`User     : ${user}`);
+  console.log(` Database : ${dbName}`);
 
   try {
     // 1. Hubungkan ke MySQL Server terlebih dahulu (tanpa memilih database)
@@ -41,25 +39,23 @@ async function runMigration() {
     });
 
     // 2. Buat database jika belum ada
-    console.log(`📦 Memastikan database '${dbName}' tersedia...`);
+    console.log(` Memastikan database '${dbName}' tersedia...`);
     await conn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
     await conn.query(`USE \`${dbName}\`;`);
 
     // 3. Eksekusi seluruh skema tabel & data awal
-    console.log("⚡ Mengeksekusi skema tabel relasional dan data awal...");
+    console.log(" Mengeksekusi skema tabel relasional dan data awal...");
     await conn.query(sqlContent);
 
-    console.log("=========================================");
-    console.log("✅ MIGRASI SUKSES!");
-    console.log(`📁 Database '${dbName}' siap digunakan.`);
-    console.log("👤 Akun Default: Username: 'admin' | Password: 'password123'");
-    console.log("=========================================");
+    console.log(" MIGRASI SUKSES!");
+    console.log(` Database '${dbName}' siap digunakan.`);
+    console.log(" Akun Default: Username: 'admin' | Password: 'password123'");
 
     await conn.end();
     process.exit(0);
   } catch (err) {
-    console.error("\n❌ Gagal migrasi database:", err.message);
-    console.error("\n💡 Tips Solusi:");
+    console.error("\n Gagal migrasi database:", err.message);
+    console.error("\n Tips Solusi:");
     console.error("1. Pastikan service MySQL sudah aktif (misal: tombol Start MySQL di XAMPP).");
     console.error("2. Pastikan port, user, dan password di file .env sesuai dengan MySQL lokal Anda.");
     console.error(`   (Contoh XAMPP: DB_HOST=localhost, DB_PORT=3306, DB_USER=root, DB_PASSWORD=)`);
