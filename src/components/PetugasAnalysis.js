@@ -218,7 +218,7 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys }) {
 
           <td>
             <div style="font-weight:700; color:#334155; font-size:0.88rem;">${p.wilayah_tugas || '-'}</div>
-            ${p.telepon && p.telepon !== '-' ? `<div style="font-size:0.75rem; color:#64748b;">📞 ${p.telepon}</div>` : ''}
+            ${p.telepon && p.telepon !== '-' ? `<div style="font-size:0.75rem; color:#64748b;">Telp: ${p.telepon}</div>` : ''}
           </td>
 
           <td style="text-align:center;">
@@ -296,3 +296,4 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys }) {
     });
   }
 }
+

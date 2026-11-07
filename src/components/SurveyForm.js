@@ -50,7 +50,7 @@ export function renderSurveyForm(initialData = null) {
         <div class="step-item" data-step="5"><div class="step-number">5</div><div class="step-label">Konfirmasi</div></div>
       </div>
 
-      <form id="housing-survey-form">
+      <form id="housing-survey-form" novalidate>
         <input type="hidden" name="id" value="${initialData?.id || ''}">
         <input type="hidden" name="status_verifikasi" value="${initialData?.status_verifikasi || 'MENUNGGU_VALIDASI'}">
         <input type="hidden" name="created_by" value="${initialData?.created_by || currentUser.id || ''}">
@@ -73,7 +73,7 @@ export function renderSurveyForm(initialData = null) {
           </button>
           <div style="flex:1;"></div>
           <button type="button" class="btn btn-primary" id="btn-next-step">Lanjut ${icons.chevronRight('w-4 h-4')}</button>
-          <button type="submit" class="btn btn-primary" id="btn-submit-survey" style="display:none; background:#047857; border-color:#047857;">${icons.check('w-4 h-4')} ${isEdit ? 'Simpan Perubahan' : 'Kirim Berkas'}</button>
+          <button type="button" class="btn btn-primary" id="btn-submit-survey" style="display:none; background:#047857; border-color:#047857;">${icons.check('w-4 h-4')} ${isEdit ? 'Simpan Perubahan' : 'Kirim Berkas'}</button>
         </div>
       </form>
     </div>
@@ -121,10 +121,16 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     const requiredInputs = pane.querySelectorAll("input[required], select[required], textarea[required]");
     for (const el of requiredInputs) {
       if (!el.value || el.value.trim() === "") {
-        el.focus();
+        if (currentStep !== step) goToStep(step);
+        setTimeout(() => {
+          try {
+            el.focus();
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+          } catch (_) {}
+        }, 100);
         const group = el.closest(".form-group");
         const label = group?.querySelector(".form-label")?.textContent?.replace("*", "").trim() || el.name;
-        alert(`Bidang wajib belum diisi:\n"${label}"\n\nHarap lengkapi isian ini sebelum melanjutkan.`);
+        alert(`Bidang wajib belum diisi (Langkah ${step}):\n"${label}"\n\nHarap lengkapi isian ini sebelum melanjutkan.`);
         return false;
       }
     }
@@ -135,8 +141,9 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       if (nikEl) {
         const nikVal = nikEl.value.trim();
         if (!/^\d{16}$/.test(nikVal)) {
-          nikEl.focus();
-          alert("Validasi Gagal:\nNomor Induk Kependudukan (NIK) harus terdiri dari tepat 16 digit angka resmi.");
+          if (currentStep !== 1) goToStep(1);
+          setTimeout(() => { try { nikEl.focus(); } catch (_) {} }, 100);
+          alert("Validasi Gagal (Langkah 1):\nNomor Induk Kependudukan (NIK) harus terdiri dari tepat 16 digit angka resmi.");
           return false;
         }
       }
@@ -145,8 +152,9 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       if (kkEl) {
         const kkVal = kkEl.value.trim();
         if (!/^\d{16}$/.test(kkVal)) {
-          kkEl.focus();
-          alert("Validasi Gagal:\nNomor Kartu Keluarga (No. KK) harus terdiri dari tepat 16 digit angka.");
+          if (currentStep !== 1) goToStep(1);
+          setTimeout(() => { try { kkEl.focus(); } catch (_) {} }, 100);
+          alert("Validasi Gagal (Langkah 1):\nNomor Kartu Keluarga (No. KK) harus terdiri dari tepat 16 digit angka.");
           return false;
         }
       }
@@ -154,13 +162,15 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       const rwSelect = pane.querySelector('[name="rw"]');
       const rtSelect = pane.querySelector('[name="rt"]');
       if (rwSelect && (!rwSelect.value || rwSelect.value === "")) {
-        rwSelect.focus();
-        alert("Validasi Gagal:\nSilakan pilih nomor RW penugasan survei.");
+        if (currentStep !== 1) goToStep(1);
+        setTimeout(() => { try { rwSelect.focus(); } catch (_) {} }, 100);
+        alert("Validasi Gagal (Langkah 1):\nSilakan pilih nomor RW penugasan survei.");
         return false;
       }
       if (rtSelect && (!rtSelect.value || rtSelect.value === "")) {
-        rtSelect.focus();
-        alert("Validasi Gagal:\nSilakan pilih nomor RT domisili rumah warga.");
+        if (currentStep !== 1) goToStep(1);
+        setTimeout(() => { try { rtSelect.focus(); } catch (_) {} }, 100);
+        alert("Validasi Gagal (Langkah 1):\nSilakan pilih nomor RT domisili rumah warga.");
         return false;
       }
     }
@@ -172,11 +182,22 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       const latVal = parseFloat(latInput?.value);
       const lngVal = parseFloat(lngInput?.value);
       if (isNaN(latVal) || isNaN(lngVal) || latVal === 0 || lngVal === 0) {
-        alert("Validasi Lokasi:\nTitik koordinat GPS rumah belum ditentukan. Silakan klik tombol 'Ambil Koordinat GPS Saat Ini' atau klik langsung pada peta.");
+        if (currentStep !== 4) goToStep(4);
+        alert("Validasi Lokasi (Langkah 4):\nTitik koordinat GPS rumah belum ditentukan. Silakan klik tombol 'Ambil Koordinat GPS Saat Ini' atau klik langsung pada peta.");
         return false;
       }
     }
 
+    return true;
+  }
+
+  // Validasi seluruh langkah sebelum pengiriman akhir
+  function validateAllSteps() {
+    for (let s = 1; s <= 4; s++) {
+      if (!validateCurrentStep(s)) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -192,7 +213,12 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     item.addEventListener("click", () => {
       const targetStep = Number(item.dataset.step);
       if (targetStep > currentStep) {
-        if (!validateCurrentStep(currentStep)) return;
+        for (let s = currentStep; s < targetStep; s++) {
+          if (!validateCurrentStep(s)) {
+            goToStep(s);
+            return;
+          }
+        }
       }
       goToStep(targetStep);
     });
@@ -824,10 +850,18 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     });
   }
 
-  // Form Submit
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // Logika Pengiriman Berkas Survei
+  let isSubmitting = false;
+  async function handleSurveySubmit() {
+    if (isSubmitting) return;
+
+    if (!validateAllSteps()) return;
+
+    isSubmitting = true;
     submitBtn.disabled = true;
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.innerHTML = `<span>⏳ Mengirim Berkas...</span>`;
+
     try {
       const data = Object.fromEntries(new FormData(form).entries());
 
@@ -878,9 +912,25 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       }
       if (typeof onSaveSuccess === "function") onSaveSuccess(saved);
     } catch (err) {
+      console.error("Gagal simpan survei:", err);
       alert("Peringatan / Gagal Menyimpan Survei:\n" + (err.message || err));
+    } finally {
+      isSubmitting = false;
       submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
     }
+  }
+
+  // Tangani klik tombol Kirim Berkas
+  submitBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    handleSurveySubmit();
+  });
+
+  // Form Submit (misal saat tekan tombol Enter)
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleSurveySubmit();
   });
 
   goToStep(1);
