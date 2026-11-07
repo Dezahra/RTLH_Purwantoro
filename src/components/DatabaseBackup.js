@@ -14,14 +14,11 @@ export function renderDatabaseBackup() {
       <div class="card" style="padding: 1.25rem 1.5rem; border: 1.5px solid #38bdf8; background: #f0f9ff; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div>
           <div style="font-weight: 800; font-size: 0.95rem; color: #0369a1; display: flex; align-items: center; gap: 0.5rem;">
-            <span>⚡</span> Sinkronkan Seluruh Data Lokal Laptop ke Basis Data Server
-          </div>
-          <div style="font-size: 0.8rem; color: #0284c7; margin-top: 3px;">
-            Jika data survei (misal: 12 data warga) muncul di laptop ini tapi masih kosong di perangkat HP / petugas, klik tombol ini untuk mengirimkannya ke database server MySQL.
+            <span style="color: #0284c7; display: inline-flex; align-items: center;">${icons.refresh('w-5 h-5')}</span> Sinkronkan Seluruh Data Lokal
           </div>
         </div>
-        <button type="button" class="btn btn-primary" id="btn-push-local-to-db" style="background: #0284c7; border-color: #0284c7; font-weight: 800; padding: 0.65rem 1.35rem; font-size: 0.88rem; cursor: pointer; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);">
-          🚀 Kirim Data Lokal ke Server Sekarang
+        <button type="button" class="btn btn-primary" id="btn-push-local-to-db" style="background: #0284c7; border-color: #0284c7; font-weight: 800; padding: 0.65rem 1.35rem; font-size: 0.88rem; cursor: pointer; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25); display: inline-flex; align-items: center; gap: 0.4rem;">
+          ${icons.refresh('w-4 h-4')} Kirim Data Lokal ke Server Sekarang
         </button>
       </div>
 

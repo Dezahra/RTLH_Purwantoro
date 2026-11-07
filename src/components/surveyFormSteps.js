@@ -489,7 +489,7 @@ export function renderStep5(initialData) {
 
       <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1.25rem; margin-bottom:1.25rem;">
         <h4 style="font-size:0.92rem; font-weight:700; color:var(--dark-800); margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
-          <span></span> Verifikasi Kelengkapan Data Lapangan
+          <span style="color:#059669; display:inline-flex; align-items:center;">${icons.checkCircle('w-4 h-4')}</span> Verifikasi Kelengkapan Data Lapangan
         </h4>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.75rem; font-size:0.8rem; background:white; padding:0.75rem 1rem; border-radius:8px; border:1px solid #edf2f7;">
           <div><span style="color:#64748b;">Standar Luas / Jiwa:</span> <strong id="step5-luas-info">-</strong></div>
