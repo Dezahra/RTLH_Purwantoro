@@ -36,7 +36,7 @@ export function renderDetailModal(survey) {
               </div>
               <div style="display:flex; align-items:center; gap:0.6rem; margin-top:0.35rem;">
                 <span class="badge ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'badge-success' : (survey.status_verifikasi === 'BUTUH_REVISI' ? 'badge-danger' : 'badge-warning')}" style="font-size:0.9rem; padding:4px 12px;">
-                  ${survey.status_verifikasi === 'TERVERIFIKASI' ? '✓ Terverifikasi' : (survey.status_verifikasi === 'BUTUH_REVISI' ? '⚠️ Butuh Revisi' : '⏳ Menunggu Validasi')}
+                  ${survey.status_verifikasi === 'TERVERIFIKASI' ? '✓ Terverifikasi' : (survey.status_verifikasi === 'BUTUH_REVISI' ? '⚠️ Butuh Revisi' : ' Menunggu Validasi')}
                 </span>
                 <span style="font-size:0.85rem; font-weight:700; color:var(--dark-800);">BNBA: ${survey.no_urut_bnba || '-'}</span>
               </div>
@@ -138,15 +138,15 @@ export function renderDetailModal(survey) {
                   <span style="color:var(--dark-500);">Nilai UMK (Kota Malang):</span> 
                   <strong>Rp ${(Number(survey.nilai_umk || 3736101)).toLocaleString('id-ID')}</strong>
                   ${(Number(survey.penghasilan_nominal || 0) <= Number(survey.nilai_umk || 3736101))
-                    ? '<span class="badge badge-success" style="font-size:0.65rem; margin-left:4px;">✓ &le; UMK</span>'
-                    : '<span class="badge badge-danger" style="font-size:0.65rem; margin-left:4px;">⚠️ &gt; UMK</span>'}
+      ? '<span class="badge badge-success" style="font-size:0.65rem; margin-left:4px;">✓ &le; UMK</span>'
+      : '<span class="badge badge-danger" style="font-size:0.65rem; margin-left:4px;">⚠️ &gt; UMK</span>'}
                 </div>
                 <div><span style="color:var(--dark-500);">Status Rumah:</span> ${survey.status_rumah}</div>
                 <div>
                   <span style="color:var(--dark-500);">Aset Rumah Lain:</span> 
-                  ${survey.aset_rumah_lain === 'Ya' 
-                    ? '<span class="badge badge-danger" style="font-size:0.7rem;">⚠️ Ya (Rumah > 1)</span>' 
-                    : '<span class="badge badge-success" style="font-size:0.7rem;">Tidak Ada</span>'}
+                  ${survey.aset_rumah_lain === 'Ya'
+      ? '<span class="badge badge-danger" style="font-size:0.7rem;">⚠️ Ya (Rumah > 1)</span>'
+      : '<span class="badge badge-success" style="font-size:0.7rem;">Tidak Ada</span>'}
                 </div>
                 <div><span style="color:var(--dark-500);">Status Lahan:</span> ${survey.status_tanah}</div>
                 <div><span style="color:var(--dark-500);">Bansos:</span> <span class="badge badge-info">${survey.bansos_diterima || '-'}</span></div>
@@ -212,7 +212,7 @@ export function renderDetailModal(survey) {
               <div class="form-group" style="margin-bottom:0.75rem;">
                 <label class="form-label">Status Verifikasi Kelurahan Purwantoro</label>
                 <select id="modal-select-verif" class="form-select">
-                  <option value="MENUNGGU_VALIDASI" ${survey.status_verifikasi === 'MENUNGGU_VALIDASI' ? 'selected' : ''}>⏳ Menunggu Validasi</option>
+                  <option value="MENUNGGU_VALIDASI" ${survey.status_verifikasi === 'MENUNGGU_VALIDASI' ? 'selected' : ''}> Menunggu Validasi</option>
                   <option value="TERVERIFIKASI" ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'selected' : ''}>✓ Terverifikasi Layak Program</option>
                   <option value="BUTUH_REVISI" ${survey.status_verifikasi === 'BUTUH_REVISI' ? 'selected' : ''}>⚠️ Butuh Perbaikan / Cek Ulang</option>
                 </select>

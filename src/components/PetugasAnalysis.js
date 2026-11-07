@@ -236,13 +236,13 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys }) {
           <td>
             <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
               <span class="badge" style="background:#10b981; color:white; font-size:0.72rem; padding:3px 8px;" title="Terverifikasi Valid">
-                ✓ ${p.terverifikasi} Valid
+                 ${p.terverifikasi} Valid
               </span>
               <span class="badge" style="background:#f59e0b; color:white; font-size:0.72rem; padding:3px 8px;" title="Menunggu Validasi Kelurahan">
-                ⏳ ${p.pending} Menunggu
+                 ${p.pending} Menunggu
               </span>
               <span class="badge" style="background:#ef4444; color:white; font-size:0.72rem; padding:3px 8px;" title="Perlu Revisi Petugas">
-                ⚠️ ${p.revisi} Revisi
+                ${p.revisi} Revisi
               </span>
             </div>
           </td>

@@ -340,7 +340,7 @@ export function initGisMap(container, { onSelectSurvey, onNewSurvey }) {
               font-size:11px; font-weight:700; 
               color:${markerColor}; margin-bottom:6px;
             ">
-              ${item.status_verifikasi === 'TERVERIFIKASI' ? '✓ Terverifikasi Valid' : (item.status_verifikasi === 'BUTUH_REVISI' ? '⚠️ Butuh Revisi Lapangan' : '⏳ Menunggu Validasi')}
+              ${item.status_verifikasi === 'TERVERIFIKASI' ? '✓ Terverifikasi Valid' : (item.status_verifikasi === 'BUTUH_REVISI' ? '⚠️ Butuh Revisi Lapangan' : ' Menunggu Validasi')}
             </div>
             <button class="btn-popup-detail" data-id="${item.id}" style="
               width:100%; background:#047857; color:white; border:none; 

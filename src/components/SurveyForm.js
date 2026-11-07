@@ -126,7 +126,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
           try {
             el.focus();
             el.scrollIntoView({ behavior: "smooth", block: "center" });
-          } catch (_) {}
+          } catch (_) { }
         }, 100);
         const group = el.closest(".form-group");
         const label = group?.querySelector(".form-label")?.textContent?.replace("*", "").trim() || el.name;
@@ -142,7 +142,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
         const nikVal = nikEl.value.trim();
         if (!/^\d{16}$/.test(nikVal)) {
           if (currentStep !== 1) goToStep(1);
-          setTimeout(() => { try { nikEl.focus(); } catch (_) {} }, 100);
+          setTimeout(() => { try { nikEl.focus(); } catch (_) { } }, 100);
           alert("Validasi Gagal (Langkah 1):\nNomor Induk Kependudukan (NIK) harus terdiri dari tepat 16 digit angka resmi.");
           return false;
         }
@@ -153,7 +153,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
         const kkVal = kkEl.value.trim();
         if (!/^\d{16}$/.test(kkVal)) {
           if (currentStep !== 1) goToStep(1);
-          setTimeout(() => { try { kkEl.focus(); } catch (_) {} }, 100);
+          setTimeout(() => { try { kkEl.focus(); } catch (_) { } }, 100);
           alert("Validasi Gagal (Langkah 1):\nNomor Kartu Keluarga (No. KK) harus terdiri dari tepat 16 digit angka.");
           return false;
         }
@@ -163,13 +163,13 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       const rtSelect = pane.querySelector('[name="rt"]');
       if (rwSelect && (!rwSelect.value || rwSelect.value === "")) {
         if (currentStep !== 1) goToStep(1);
-        setTimeout(() => { try { rwSelect.focus(); } catch (_) {} }, 100);
+        setTimeout(() => { try { rwSelect.focus(); } catch (_) { } }, 100);
         alert("Validasi Gagal (Langkah 1):\nSilakan pilih nomor RW penugasan survei.");
         return false;
       }
       if (rtSelect && (!rtSelect.value || rtSelect.value === "")) {
         if (currentStep !== 1) goToStep(1);
-        setTimeout(() => { try { rtSelect.focus(); } catch (_) {} }, 100);
+        setTimeout(() => { try { rtSelect.focus(); } catch (_) { } }, 100);
         alert("Validasi Gagal (Langkah 1):\nSilakan pilih nomor RT domisili rumah warga.");
         return false;
       }
@@ -230,7 +230,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     btnSaveOfflineDraft.addEventListener("click", async () => {
       btnSaveOfflineDraft.disabled = true;
       const originalText = btnSaveOfflineDraft.innerHTML;
-      btnSaveOfflineDraft.innerHTML = "⏳ Mengompresi & Menyimpan...";
+      btnSaveOfflineDraft.innerHTML = " Mengompresi & Menyimpan...";
       try {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
@@ -692,7 +692,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
         return;
       }
 
-      if (gpsStatus) gpsStatus.innerHTML = `<span>⏳ Mengambil sinyal satelit GPS...</span>`;
+      if (gpsStatus) gpsStatus.innerHTML = `<span> Mengambil sinyal satelit GPS...</span>`;
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -860,7 +860,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     isSubmitting = true;
     submitBtn.disabled = true;
     const originalBtnText = submitBtn.innerHTML;
-    submitBtn.innerHTML = `<span>⏳ Mengirim Berkas...</span>`;
+    submitBtn.innerHTML = `<span> Mengirim Berkas...</span>`;
 
     try {
       const data = Object.fromEntries(new FormData(form).entries());

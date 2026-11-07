@@ -82,7 +82,7 @@ export function renderDatabaseBackup() {
               <span id="btn-backup-label">Unduh Cadangan Database (.ZIP)</span>
             </button>
             <div id="backup-progress-msg" style="display: none; font-size: 0.78rem; color: #047857; font-weight: 700; text-align: center; margin-top: 0.5rem;">
-              ⏳ Mengemas berkas ZIP dari server... Harap tunggu sebentar.
+               Mengemas berkas ZIP dari server... Harap tunggu sebentar.
             </div>
           </div>
         </div>
@@ -131,7 +131,7 @@ export function renderDatabaseBackup() {
                 <span id="btn-restore-label">Pilih Berkas & Unggah Sinkronisasi</span>
               </button>
               <div id="restore-progress-msg" style="display: none; font-size: 0.78rem; color: #0284c7; font-weight: 700; text-align: center; margin-top: 0.5rem;">
-                ⏳ Memproses sinkronisasi dan memulihkan basis data... Harap tidak menutup jendela browser.
+                Memproses sinkronisasi dan memulihkan basis data... Harap tidak menutup jendela browser.
               </div>
             </div>
           </div>
@@ -194,7 +194,7 @@ export function initDatabaseBackupEvents(container, { showToast, onStateChange }
       }
       btnPushLocal.disabled = true;
       const originalText = btnPushLocal.innerHTML;
-      btnPushLocal.innerHTML = "⏳ Mengirim data ke server...";
+      btnPushLocal.innerHTML = " Mengirim data ke server...";
       try {
         const res = await storage.pushLocalSurveysToDB();
         if (res.successCount > 0) {
