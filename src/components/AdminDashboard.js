@@ -1,14 +1,12 @@
 import Chart from "chart.js/auto";
 import { icons } from "../utils/icons.js";
 import { storage } from "../utils/storage.js";
-import { formatDateIndo } from "../utils/dateHelper.js";
 
 let statusChartInstance = null;
 let rwChartInstance = null;
 
 export function renderDashboard() {
   const stats = storage.getStats();
-  const pStats = storage.getPetugasStats();
 
   return `
 
@@ -63,73 +61,6 @@ export function renderDashboard() {
         <div class="chart-container">
           <canvas id="chart-rw-bar"></canvas>
         </div>
-      </div>
-    </div>
-
-    <!-- Analisis & Rekap Kinerja Hasil Input per Petugas Lapangan -->
-    <div class="card" style="margin-top:1.25rem;">
-      <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-        <div class="card-title">
-          ${icons.chart('w-5 h-5')} Analisis Hasil Input per Petugas Lapangan
-        </div>
-        <div style="font-size:0.8rem; font-weight:700; color:#64748b;">
-          ${pStats.activePetugasCount} dari ${pStats.totalPetugasCount} Petugas Aktif Menginput (${pStats.totalSurveys} Total Data)
-        </div>
-      </div>
-
-      <div class="table-responsive" style="max-height:360px; overflow-y:auto;">
-        <table class="custom-table" style="width:100%; margin:0; font-size:0.85rem;">
-          <thead style="position:sticky; top:0; background:#f8fafc; z-index:2;">
-            <tr>
-              <th style="width:40px; text-align:center;">No</th>
-              <th>Petugas Surveyor</th>
-              <th>Wilayah Tugas</th>
-              <th style="text-align:center;">Jumlah Survei</th>
-              <th>Status Validasi</th>
-              <th>Terakhir Input</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${pStats.petugasList.map((p, idx) => {
-              const pct = pStats.totalSurveys > 0 ? Math.round((p.total_survei / pStats.totalSurveys) * 100) : 0;
-              return `
-                <tr>
-                  <td style="text-align:center; font-weight:700; color:#64748b;">${idx + 1}</td>
-                  <td>
-                    <div style="font-weight:700; color:#1e293b;">${p.nama}</div>
-                    <div style="font-size:0.72rem; color:#64748b;">ID: ${p.id_petugas || p.id} • @${p.username}</div>
-                  </td>
-                  <td>
-                    <div style="font-weight:600; color:#334155;">${p.wilayah_tugas || '-'}</div>
-                  </td>
-                  <td style="text-align:center;">
-                    <div style="font-weight:800; font-size:1.05rem; color:${p.total_survei > 0 ? '#1e293b' : '#94a3b8'};">
-                      ${p.total_survei}
-                    </div>
-                    ${p.total_survei > 0 ? `
-                      <div style="width:70px; height:4px; background:#e2e8f0; border-radius:999px; margin:3px auto 0 auto; overflow:hidden;">
-                        <div style="width:${Math.min(100, pct * 2)}%; height:100%; background:#2563eb; border-radius:999px;"></div>
-                      </div>
-                      <div style="font-size:0.65rem; color:#64748b;">${pct}%</div>
-                    ` : '<div style="font-size:0.65rem; color:#94a3b8;">Belum input</div>'}
-                  </td>
-                  <td>
-                    <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
-                      <span class="badge" style="background:#10b981; color:white; font-size:0.68rem; padding:2px 6px;">✓ ${p.terverifikasi}</span>
-                      <span class="badge" style="background:#f59e0b; color:white; font-size:0.68rem; padding:2px 6px;">⏳ ${p.pending}</span>
-                      <span class="badge" style="background:#ef4444; color:white; font-size:0.68rem; padding:2px 6px;">⚠️ ${p.revisi}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div style="font-size:0.75rem; color:#475569; font-weight:500;">
-                      ${p.terakhir_input ? formatDateIndo(p.terakhir_input, 'short') : '-'}
-                    </div>
-                  </td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
       </div>
     </div>
   `;

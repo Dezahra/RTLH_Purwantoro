@@ -62,3 +62,4 @@ export function formatDateIndo(input, format = 'long') {
     return String(input);
   }
 }
+
