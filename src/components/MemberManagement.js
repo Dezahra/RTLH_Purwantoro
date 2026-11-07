@@ -946,9 +946,9 @@ export function initMemberManagementEvents(container, { showToast, onStateChange
       const rwNum = String(i + 1).padStart(2, '0');
       const assignedTo = takenRwMap[rwNum];
       if (assignedTo) {
-        return `<option value="RW ${rwNum} (Seluruh RT)" disabled style="color:#9ca3af; background:#f9fafb;">RW ${rwNum} — [Sudah Ditugaskan: ${assignedTo}]</option>`;
+        return `<option value="RW ${rwNum}">RW ${rwNum} (Termasuk: ${assignedTo})</option>`;
       } else {
-        return `<option value="RW ${rwNum} (Seluruh RT)">RW ${rwNum} (Tersedia - 1 RW 1 Petugas)</option>`;
+        return `<option value="RW ${rwNum}">RW ${rwNum} (Tersedia)</option>`;
       }
     }).join('')}
                     </select>

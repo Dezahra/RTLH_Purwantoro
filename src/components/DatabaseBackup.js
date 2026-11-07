@@ -10,6 +10,21 @@ export function renderDatabaseBackup() {
   return `
     <div class="database-backup-container" style="max-width: ${isPetugas ? '720px' : '1080px'}; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
 
+      <!-- BANNER SINKRONISASI DATA LOKAL KE SERVER DATABASE -->
+      <div class="card" style="padding: 1.25rem 1.5rem; border: 1.5px solid #38bdf8; background: #f0f9ff; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div style="font-weight: 800; font-size: 0.95rem; color: #0369a1; display: flex; align-items: center; gap: 0.5rem;">
+            <span>⚡</span> Sinkronkan Seluruh Data Lokal Laptop ke Basis Data Server
+          </div>
+          <div style="font-size: 0.8rem; color: #0284c7; margin-top: 3px;">
+            Jika data survei (misal: 12 data warga) muncul di laptop ini tapi masih kosong di perangkat HP / petugas, klik tombol ini untuk mengirimkannya ke database server MySQL.
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="btn-push-local-to-db" style="background: #0284c7; border-color: #0284c7; font-weight: 800; padding: 0.65rem 1.35rem; font-size: 0.88rem; cursor: pointer; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);">
+          🚀 Kirim Data Lokal ke Server Sekarang
+        </button>
+      </div>
+
       ${!isPetugas ? `
         <!-- STATISTIK RINGKASAN DATABASE (HANYA ADMIN & PEGAWAI) -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
@@ -167,6 +182,41 @@ export function initDatabaseBackupEvents(container, { showToast, onStateChange }
     }
   }
   loadDatabaseStats();
+
+  // 1b. Event Tombol Kirim Data Lokal ke Server Database
+  const btnPushLocal = container.querySelector("#btn-push-local-to-db");
+  if (btnPushLocal) {
+    btnPushLocal.addEventListener("click", async () => {
+      const localList = storage.getSurveys();
+      if (!localList || localList.length === 0) {
+        alert("Tidak ada data survei lokal di browser ini.");
+        return;
+      }
+      if (!confirm(`Apakah Anda ingin mengirim ${localList.length} data survei lokal dari browser ini ke basis data server MySQL?`)) {
+        return;
+      }
+      btnPushLocal.disabled = true;
+      const originalText = btnPushLocal.innerHTML;
+      btnPushLocal.innerHTML = "⏳ Mengirim data ke server...";
+      try {
+        const res = await storage.pushLocalSurveysToDB();
+        if (res.successCount > 0) {
+          alert(`Berhasil! ${res.successCount} dari ${res.total} data survei berhasil dikirim dan tersimpan di database server MySQL.\n\nSekarang data ini sudah dapat diakses oleh perangkat lain (HP dan petugas).`);
+          if (typeof showToast === "function") {
+            showToast(`${res.successCount} data berhasil disinkronkan ke server!`);
+          }
+          await loadDatabaseStats();
+        } else {
+          alert(`Gagal mengirim data ke server:\n${res.errors.join('\n') || 'Server tidak merespons.'}\n\nPastikan server backend di https://sipelita.bpskotamalang.id/ sedang aktif dan Nginx reverse proxy mengarah ke port 8000.`);
+        }
+      } catch (err) {
+        alert("Error sinkronisasi: " + err.message);
+      } finally {
+        btnPushLocal.disabled = false;
+        btnPushLocal.innerHTML = originalText;
+      }
+    });
+  }
 
   // 2. Event Tombol Unduh Cadangan Database ZIP via Fetch Blob
   if (btnBackupZip) {

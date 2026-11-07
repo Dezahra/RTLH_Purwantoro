@@ -747,6 +747,13 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       try {
         const formData = new FormData(form);
         const draftObj = Object.fromEntries(formData.entries());
+
+        // Pastikan nomor RW dan RT selalu tersimpan presisi meskipun select dalam kondisi disabled
+        const rwSelect = form.querySelector('[name="rw"]');
+        const rtSelect = form.querySelector('[name="rt"]');
+        if (rwSelect && rwSelect.value) draftObj.rw = rwSelect.value;
+        if (rtSelect && rtSelect.value) draftObj.rt = rtSelect.value;
+
         ['depan', 'dalam', 'atap', 'sanitasi'].forEach(slot => {
           const inp = form.querySelector(`#input-foto-${slot}`);
           if (inp && inp.value) draftObj[`foto_${slot}`] = inp.value;
@@ -766,17 +773,35 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
   const draftBanner = container.querySelector("#draft-alert-banner");
 
   if (restoreDraftBtn) {
-    restoreDraftBtn.addEventListener("click", () => {
+    restoreDraftBtn.addEventListener("click", async () => {
       try {
         const raw = localStorage.getItem("sipelita_survey_draft");
         if (raw) {
           const draft = JSON.parse(raw);
+
+          // 1. Inisialisasi dan sinkronkan dropdown RT/RW terlebih dahulu dengan data draf
+          if (draft.rw || draft.rt) {
+            await initRtRwDropdowns(container, draft.rw, draft.rt);
+          }
+
+          // 2. Isi nilai field formulir lainnya
           Object.keys(draft).forEach(key => {
             const inputEl = form.querySelector(`[name="${key}"]`);
             if (inputEl) {
               inputEl.value = draft[key];
             }
           });
+
+          // 3. Pastikan kembali nilai RW dan RT terpilih secara tepat
+          if (draft.rw) {
+            const rwEl = form.querySelector('[name="rw"]');
+            if (rwEl) rwEl.value = String(draft.rw).padStart(2, "0");
+          }
+          if (draft.rt) {
+            const rtEl = form.querySelector('[name="rt"]');
+            if (rtEl) rtEl.value = String(draft.rt).padStart(2, "0");
+          }
+
           ['depan', 'dalam', 'atap', 'sanitasi'].forEach(slot => {
             const pVal = draft[`foto_${slot}`];
             if (pVal && pVal.length > 50) {
@@ -824,6 +849,21 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       // Pastikan akurasi_gps terisi default 0 jika kosong
       if (data.akurasi_gps === undefined || data.akurasi_gps === null || String(data.akurasi_gps).trim() === "") {
         data.akurasi_gps = "0";
+      }
+
+      // Pastikan identitas petugas tercatat jika yang login adalah Petugas
+      if (currentUser?.role === 'petugas') {
+        data.created_by = currentUser.id;
+        data.petugas_nama = currentUser.nama;
+        data.petugas_id = currentUser.id_petugas || currentUser.id;
+      }
+
+      // Optimalkan ukuran 4 foto sebelum kirim ke server (kompresi agar lolos batas Nginx & hemat kuota HP)
+      for (const slot of ['depan', 'dalam', 'atap', 'sanitasi']) {
+        const key = `foto_${slot}`;
+        if (data[key] && typeof data[key] === 'string' && data[key].startsWith('data:image') && data[key].length > 40000) {
+          data[key] = await compressBase64Image(data[key], 800, 0.65);
+        }
       }
 
       const saved = await storage.saveSurvey(data);
