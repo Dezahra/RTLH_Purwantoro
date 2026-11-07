@@ -1,5 +1,6 @@
 import { icons } from "../utils/icons.js";
 import { storage } from "../utils/storage.js";
+import { formatDateIndo } from "../utils/dateHelper.js";
 
 export function renderDetailModal(survey) {
   const currentRole = storage.getCurrentRole();
@@ -17,7 +18,7 @@ export function renderDetailModal(survey) {
                 Dossier Penilaian: ${survey.nama_kk}
               </div>
               <div style="font-size:0.75rem; color:var(--dark-600);">
-                No. Registrasi: ${survey.id} • <strong>No. Urut BNBA:</strong> <span style="font-family:monospace; color:var(--primary-700); font-weight:700;">${survey.no_urut_bnba || '-'}</span> • Tanggal Survey: ${survey.tanggal_survey || '-'} • Petugas: ${survey.petugas_nama}
+                No. Registrasi: ${survey.id} • <strong>No. Urut BNBA:</strong> <span style="font-family:monospace; color:var(--primary-700); font-weight:700;">${survey.no_urut_bnba || '-'}</span> • Tanggal Survey: ${formatDateIndo(survey.tanggal_survey || survey.created_at)} • Petugas: ${survey.petugas_nama}
               </div>
             </div>
           </div>

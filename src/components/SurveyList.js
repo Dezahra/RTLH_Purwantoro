@@ -2,6 +2,8 @@ import { icons } from "../utils/icons.js";
 import { storage, isSurveyOwnedByPetugas } from "../utils/storage.js";
 import { masterRtRwPurwantoro } from "../utils/rtrw.js";
 import { renderExportModal, initExportModalEvents } from "./ExportModal.js";
+import { formatDateIndo } from "../utils/dateHelper.js";
+import { renderPetugasAnalysisModal, initPetugasAnalysisEvents } from "./PetugasAnalysisModal.js";
 
 export function renderSurveyList() {
   const currentRole = storage.getCurrentRole();
@@ -22,6 +24,11 @@ export function renderSurveyList() {
         </div>
 
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          ${!isPetugas ? `
+            <button class="btn btn-secondary btn-sm" id="btn-petugas-analysis" style="background:#2563eb; color:white; border-color:#2563eb; font-weight:700; display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 0.85rem; border-radius:var(--radius-md); box-shadow:0 1px 3px rgba(0,0,0,0.1);" title="Lihat Rekap dan Analisis Kinerja Hasil Input Survei per Petugas">
+              ${icons.chart('w-4 h-4')} Analisis Petugas
+            </button>
+          ` : ''}
           <button class="btn btn-secondary btn-sm" id="btn-export-surveys-excel" style="background:#059669; color:white; border-color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 0.85rem; border-radius:var(--radius-md); box-shadow:0 1px 3px rgba(0,0,0,0.1);" title="Ekspor Data Rumah ke Berkas Excel / CSV Lengkap dengan Kop Dokumen">
             ${icons.download('w-4 h-4')} Ekspor Data
           </button>
@@ -56,6 +63,12 @@ export function renderSurveyList() {
             <option value="TERVERIFIKASI"> Terverifikasi</option>
             <option value="BUTUH_REVISI"> Butuh Revisi</option>
           </select>
+
+          ${!isPetugas ? `
+            <select class="form-select" id="list-filter-petugas" style="width:auto; padding:0.55rem 0.85rem;" title="Filter berdasarkan Petugas Surveyor">
+              <option value="ALL">Semua Petugas</option>
+            </select>
+          ` : ''}
 
           <!-- Filter Rentang Tanggal Survei -->
           <select class="form-select" id="list-filter-date" style="width:auto; padding:0.55rem 0.85rem;" title="Filter berdasarkan tanggal pelaksanaan survei">
@@ -132,6 +145,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
   const filterRw = container.querySelector("#list-filter-rw");
   const filterRt = container.querySelector("#list-filter-rt");
   const filterVerif = container.querySelector("#list-filter-verif");
+  const filterPetugas = container.querySelector("#list-filter-petugas");
   const filterDate = container.querySelector("#list-filter-date");
   const customDateWrap = container.querySelector("#list-custom-date-wrap");
   const filterStartDate = container.querySelector("#list-filter-start-date");
@@ -158,12 +172,52 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       rts.map(rt => `<option value="${rt}">RT ${rt}</option>`).join("");
   }
 
+  function populatePetugasOptions() {
+    if (!filterPetugas) return;
+    const pStats = storage.getPetugasStats();
+    let html = `<option value="ALL">Semua Petugas (${pStats.totalPetugasCount})</option>`;
+    pStats.petugasList.forEach(p => {
+      html += `<option value="${p.id || p.nama}">${p.nama} ${p.total_survei > 0 ? `(${p.total_survei} survei)` : '(0)'}</option>`;
+    });
+    filterPetugas.innerHTML = html;
+  }
+
   populateRwOptions();
   updateRtOptions("ALL");
+  populatePetugasOptions();
 
   // Biarkan default awal "Semua RW" agar seluruh data survey yang pernah diinput langsung tampil,
   // namun dropdown RW/RT tetap siap digunakan jika petugas ingin memfilter.
   let lastFilteredSurveys = [];
+
+  // Tombol Analisis & Rekap Kinerja Petugas
+  const btnPetugasAnalysis = container.querySelector("#btn-petugas-analysis");
+  if (btnPetugasAnalysis) {
+    btnPetugasAnalysis.addEventListener("click", () => {
+      const modalRoot = document.getElementById("modal-root") || document.body;
+      const modalWrapper = document.createElement("div");
+      modalWrapper.innerHTML = renderPetugasAnalysisModal();
+      modalRoot.appendChild(modalWrapper.firstElementChild);
+
+      initPetugasAnalysisEvents(modalRoot, {
+        onSelectPetugas: (pId, pNama) => {
+          if (filterPetugas) {
+            let matchedOption = Array.from(filterPetugas.options).find(opt => 
+              opt.value === pId || opt.value === pNama || opt.text.toLowerCase().includes((pNama || '').toLowerCase())
+            );
+            if (matchedOption) {
+              filterPetugas.value = matchedOption.value;
+            }
+            currentPage = 1;
+            renderRows();
+            if (typeof showToast === "function") {
+              showToast(`Menyaring data hasil survei petugas: ${pNama || pId}`);
+            }
+          }
+        }
+      });
+    });
+  }
 
   // Cetak Rekap BNBA
   const rekapBtn = container.querySelector("#btn-list-rekap-bnba");
@@ -308,6 +362,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     const rwVal = filterRw ? filterRw.value : "ALL";
     const rtVal = filterRt ? filterRt.value : "ALL";
     const v = filterVerif ? filterVerif.value : "ALL";
+    const petugasVal = filterPetugas ? filterPetugas.value : "ALL";
 
     const filtered = list.filter(item => {
       // Filter RW
@@ -336,6 +391,31 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       }
       // Filter Verifikasi
       if (v !== "ALL" && item.status_verifikasi !== v) return false;
+
+      // Filter Petugas (Khusus Admin / Pegawai)
+      if (!isPetugas && petugasVal !== "ALL") {
+        const itemPetugasId = String(item.petugas_id || item.created_by || "").toLowerCase().trim();
+        const itemPetugasNama = String(item.petugas_nama || item.nama_petugas || "").toLowerCase().trim();
+        const targetVal = petugasVal.toLowerCase().trim();
+
+        const matchId = itemPetugasId === targetVal;
+        const matchNama = itemPetugasNama === targetVal || itemPetugasNama.includes(targetVal);
+
+        let matchOwnership = false;
+        if (!matchId && !matchNama) {
+          const allUsers = storage.getUsers();
+          const targetUser = allUsers.find(u => 
+            String(u.id || '').toLowerCase() === targetVal || 
+            String(u.nama || '').toLowerCase() === targetVal ||
+            String(u.username || '').toLowerCase() === targetVal
+          );
+          if (targetUser) {
+            matchOwnership = isSurveyOwnedByPetugas(item, targetUser);
+          }
+        }
+
+        if (!matchId && !matchNama && !matchOwnership) return false;
+      }
 
       // Filter Rentang Tanggal Survei
       if (filterDate && filterDate.value !== "ALL") {
@@ -499,7 +579,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
 
           <td>
             <div style="font-weight:600; font-size:0.8rem;">${item.petugas_nama || 'Petugas'}</div>
-            <div style="font-size:0.72rem; color:var(--dark-500);">${item.tanggal_survey || '-'}</div>
+            <div style="font-size:0.72rem; color:var(--dark-500);">${formatDateIndo(item.tanggal_survey || item.created_at, 'short')}</div>
           </td>
 
           <td style="text-align:right;">
@@ -766,6 +846,13 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     });
   }
 
+  if (filterPetugas) {
+    filterPetugas.addEventListener("change", () => {
+      currentPage = 1;
+      renderRows();
+    });
+  }
+
   if (filterDate) {
     filterDate.addEventListener("change", () => {
       if (customDateWrap) {
@@ -844,6 +931,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
   (async () => {
     if (typeof storage.syncSurveysFromDB === "function") {
       await storage.syncSurveysFromDB();
+      populatePetugasOptions();
       renderRows();
     }
   })();
