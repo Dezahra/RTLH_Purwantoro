@@ -98,16 +98,6 @@ export function renderPrintReport(survey) {
   const rwFormatted = survey.rw ? String(survey.rw).padStart(2, "0") : "-";
   const rtFormatted = survey.rt ? String(survey.rt).padStart(2, "0") : "-";
 
-  // Evaluasi rekomendasi bansos RTLH
-  const isRecommended = survey.status_verifikasi === "TERVERIFIKASI";
-
-  // Penentuan alasan jika tidak direkomendasikan
-  const isNoKKSendiri = !survey.no_kk || survey.no_kk === "-" || String(survey.no_kk).trim() === "";
-  const isTanahSengketa = String(survey.status_tanah || "").toLowerCase().includes("sengketa");
-  const isRumahLayak = survey.status_verifikasi !== "TERVERIFIKASI" && !isTanahSengketa && !isNoKKSendiri;
-  const isRumahLebihDari1 = String(survey.aset_rumah_lain || "").toLowerCase() === "ya";
-  const isGajiTinggi = Number(survey.penghasilan_nominal || 0) > Number(survey.nilai_umk || 3736101);
-
   return `
     <div class="modal-backdrop" id="print-modal-backdrop">
       <div class="modal-dialog" style="max-width: 860px;">
@@ -358,7 +348,7 @@ export function renderPrintReport(survey) {
                 <!-- Kolom Kiri: Direkomendasikan -->
                 <td style="border: 1px solid #000; padding: 8px 10px; vertical-align: top; width: 33%;">
                   <div style="display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 9pt;">
-                    <span style="display: inline-block; width: 13px; height: 13px; border: 1.5px solid #000; text-align: center; line-height: 11px; font-size: 10px; font-weight: bold; flex-shrink: 0;">${isRecommended ? '✓' : ''}</span>
+                    <span style="display: inline-block; width: 13px; height: 13px; border: 1.5px solid #000; text-align: center; line-height: 11px; font-size: 10px; font-weight: bold; flex-shrink: 0;"></span>
                     <span>Direkomendasikan Bansos RTLH</span>
                   </div>
                 </td>
@@ -366,7 +356,7 @@ export function renderPrintReport(survey) {
                 <!-- Kolom Kanan: Tidak Direkomendasikan + Alasan (3 Kolom Sub-grid) -->
                 <td style="border: 1px solid #000; padding: 8px 10px; vertical-align: top; width: 67%;">
                   <div style="font-weight: bold; font-size: 9pt; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                    <span style="display: inline-block; width: 13px; height: 13px; border: 1.5px solid #000; text-align: center; line-height: 11px; font-size: 10px; font-weight: bold; flex-shrink: 0;">${!isRecommended ? '✓' : ''}</span>
+                    <span style="display: inline-block; width: 13px; height: 13px; border: 1.5px solid #000; text-align: center; line-height: 11px; font-size: 10px; font-weight: bold; flex-shrink: 0;"></span>
                     <span>Tidak direkomendasikan Bansos RTLH, Alasan :</span>
                   </div>
 
@@ -374,15 +364,15 @@ export function renderPrintReport(survey) {
                     <!-- Sub-kolom 1 -->
                     <div>
                       <div style="display: flex; gap: 5px; align-items: flex-start; margin-bottom: 5px;">
-                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;">${isNoKKSendiri ? '✓' : ''}</span>
+                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;"></span>
                         <span>Belum memiliki KK Sendiri</span>
                       </div>
                       <div style="display: flex; gap: 5px; align-items: flex-start; margin-bottom: 5px;">
-                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;">${isTanahSengketa ? '✓' : ''}</span>
+                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;"></span>
                         <span>Tanah Bersengketa / tanpa bukti sah kepemilikan</span>
                       </div>
                       <div style="display: flex; gap: 5px; align-items: flex-start;">
-                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;">${isRumahLayak ? '✓' : ''}</span>
+                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;"></span>
                         <span>Rumah layak huni/ rusak ringan</span>
                       </div>
                     </div>
@@ -390,7 +380,7 @@ export function renderPrintReport(survey) {
                     <!-- Sub-kolom 2 -->
                     <div>
                       <div style="display: flex; gap: 5px; align-items: flex-start; margin-bottom: 5px;">
-                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;">${isRumahLebihDari1 ? '✓' : ''}</span>
+                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;"></span>
                         <span>Memiliki rumah &gt;1</span>
                       </div>
                       <div style="display: flex; gap: 5px; align-items: flex-start; margin-bottom: 5px;">
@@ -398,7 +388,7 @@ export function renderPrintReport(survey) {
                         <span>Pernah Mendapat Bansos</span>
                       </div>
                       <div style="display: flex; gap: 5px; align-items: flex-start;">
-                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;">${isGajiTinggi ? '✓' : ''}</span>
+                        <span style="display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 9px; font-size: 9px; font-weight: bold; flex-shrink: 0; margin-top: 1px;"></span>
                         <span>Penghasilan &gt;UMP/UMK</span>
                       </div>
                     </div>
