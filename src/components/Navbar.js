@@ -11,6 +11,12 @@ export function getTabMetadata(activeTab, role) {
         breadcrumb: "Statistik RTLH",
         category: "Monitoring"
       };
+    case "kinerja-petugas":
+      return {
+        title: "Analisis Hasil Kerja Petugas",
+        breadcrumb: "Kinerja Petugas",
+        category: "Monitoring"
+      };
     case "surveys":
       return {
         title: isPetugas ? "Riwayat Survey Lapangan" : "Data Rumah",
@@ -128,6 +134,10 @@ export function renderSidebar(activeTab) {
             <button class="nav-btn ${activeTab === 'surveys' ? 'active' : ''}" data-tab="surveys">
               <span class="nav-btn-icon">${icons.clipboard('w-5 h-5')}</span>
               <span class="nav-btn-text">Data Rumah</span>
+            </button>
+            <button class="nav-btn ${activeTab === 'kinerja-petugas' ? 'active' : ''}" data-tab="kinerja-petugas">
+              <span class="nav-btn-icon">${icons.users('w-5 h-5')}</span>
+              <span class="nav-btn-text">Kinerja Petugas</span>
             </button>
             <button class="nav-btn ${activeTab === 'map' ? 'active' : ''}" data-tab="map">
               <span class="nav-btn-icon">${icons.map('w-5 h-5')}</span>

@@ -58,6 +58,12 @@ export function renderSurveyList() {
             <option value="BUTUH_REVISI"> Butuh Revisi</option>
           </select>
 
+          ${!isPetugas ? `
+            <select class="form-select" id="list-filter-petugas" style="width:auto; padding:0.55rem 0.85rem;" title="Filter berdasarkan nama petugas surveyor">
+              <option value="ALL">Semua Petugas</option>
+            </select>
+          ` : ''}
+
           <!-- Filter Rentang Tanggal Survei -->
           <select class="form-select" id="list-filter-date" style="width:auto; padding:0.55rem 0.85rem;" title="Filter berdasarkan tanggal pelaksanaan survei">
             <option value="ALL">Semua Tanggal</option>
@@ -124,7 +130,7 @@ export function renderSurveyList() {
   `;
 }
 
-export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, onPrintSurvey, onPrintRekap, onNewSurvey, showToast }) {
+export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, onPrintSurvey, onPrintRekap, onNewSurvey, initialPetugasFilter, showToast }) {
   const currentRole = storage.getCurrentRole();
   const currentUser = storage.getCurrentUser();
   const isPetugas = currentRole === 'petugas' || currentUser?.role === 'petugas';
@@ -133,6 +139,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
   const filterRw = container.querySelector("#list-filter-rw");
   const filterRt = container.querySelector("#list-filter-rt");
   const filterVerif = container.querySelector("#list-filter-verif");
+  const filterPetugas = container.querySelector("#list-filter-petugas");
   const filterDate = container.querySelector("#list-filter-date");
   const customDateWrap = container.querySelector("#list-custom-date-wrap");
   const filterStartDate = container.querySelector("#list-filter-start-date");
@@ -159,8 +166,28 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       rts.map(rt => `<option value="${rt}">RT ${rt}</option>`).join("");
   }
 
+  function populatePetugasOptions() {
+    if (!filterPetugas) return;
+    const pStats = storage.getPetugasStats();
+    let html = `<option value="ALL">Semua Petugas (${pStats.totalPetugasCount})</option>`;
+    pStats.petugasList.forEach(p => {
+      html += `<option value="${p.nama}">${p.nama} ${p.total_survei > 0 ? `(${p.total_survei} survei)` : '(0)'}</option>`;
+    });
+    filterPetugas.innerHTML = html;
+
+    if (initialPetugasFilter) {
+      const matchOpt = Array.from(filterPetugas.options).find(opt => 
+        opt.value === initialPetugasFilter || opt.text.toLowerCase().includes(initialPetugasFilter.toLowerCase())
+      );
+      if (matchOpt) {
+        filterPetugas.value = matchOpt.value;
+      }
+    }
+  }
+
   populateRwOptions();
   updateRtOptions("ALL");
+  populatePetugasOptions();
 
   // Biarkan default awal "Semua RW" agar seluruh data survey yang pernah diinput langsung tampil,
   // namun dropdown RW/RT tetap siap digunakan jika petugas ingin memfilter.
@@ -309,6 +336,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     const rwVal = filterRw ? filterRw.value : "ALL";
     const rtVal = filterRt ? filterRt.value : "ALL";
     const v = filterVerif ? filterVerif.value : "ALL";
+    const petugasVal = filterPetugas ? filterPetugas.value : "ALL";
 
     const filtered = list.filter(item => {
       // Filter RW
@@ -337,6 +365,15 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       }
       // Filter Verifikasi
       if (v !== "ALL" && item.status_verifikasi !== v) return false;
+
+      // Filter Nama Petugas (Khusus Admin / Pegawai)
+      if (!isPetugas && petugasVal !== "ALL") {
+        const itemPetugasNama = String(item.petugas_nama || item.nama_petugas || "").toLowerCase().trim();
+        const targetNama = petugasVal.toLowerCase().trim();
+        if (itemPetugasNama !== targetNama && !itemPetugasNama.includes(targetNama)) {
+          return false;
+        }
+      }
 
       // Filter Rentang Tanggal Survei
       if (filterDate && filterDate.value !== "ALL") {
@@ -767,6 +804,13 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     });
   }
 
+  if (filterPetugas) {
+    filterPetugas.addEventListener("change", () => {
+      currentPage = 1;
+      renderRows();
+    });
+  }
+
   if (filterDate) {
     filterDate.addEventListener("change", () => {
       if (customDateWrap) {
@@ -845,6 +889,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
   (async () => {
     if (typeof storage.syncSurveysFromDB === "function") {
       await storage.syncSurveysFromDB();
+      populatePetugasOptions();
       renderRows();
     }
   })();

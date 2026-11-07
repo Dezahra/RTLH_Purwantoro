@@ -1253,6 +1253,127 @@ export const storage = {
     };
   },
 
+  getPetugasStats() {
+    const list = this.getSurveys();
+    const users = this.getUsers();
+    
+    // Ambil semua akun petugas dari data pengguna
+    const petugasUsers = users.filter(u => u.role === 'petugas');
+    const map = new Map();
+
+    // 1. Inisialisasi setiap petugas terdaftar
+    petugasUsers.forEach(u => {
+      const key = (u.nama || u.username || u.id).toLowerCase().trim();
+      map.set(key, {
+        id: u.id,
+        id_petugas: u.id_petugas || u.id,
+        nama: u.nama,
+        username: u.username,
+        rw: u.rw || "-",
+        rt: u.rt || "-",
+        wilayah_tugas: u.wilayah_tugas || (u.rw ? `RW ${u.rw} (RT ${u.rt || '-'})` : "-"),
+        telepon: u.telepon || "-",
+        avatar: u.avatar || "👤",
+        total_survei: 0,
+        terverifikasi: 0,
+        pending: 0,
+        revisi: 0,
+        terakhir_input: null,
+        userRef: u
+      });
+    });
+
+    // 2. Petakan setiap survei ke petugas yang sesuai
+    list.forEach(survey => {
+      let matchedKey = null;
+
+      // Cari petugas terdaftar yang cocok
+      for (const [key, p] of map.entries()) {
+        const u = p.userRef;
+        if (u && isSurveyOwnedByPetugas(survey, u)) {
+          matchedKey = key;
+          break;
+        }
+        // Fallback pencocokan nama
+        const pNama = String(survey.petugas_nama || survey.nama_petugas || "").toLowerCase().trim();
+        const uNama = String(p.nama || "").toLowerCase().trim();
+        if (pNama && uNama && (pNama === uNama || pNama.includes(uNama) || uNama.includes(pNama))) {
+          matchedKey = key;
+          break;
+        }
+      }
+
+      const surveyDate = survey.tanggal_survey || survey.created_at || null;
+      const isVerif = survey.status_verifikasi === 'TERVERIFIKASI';
+      const isRevisi = survey.status_verifikasi === 'BUTUH_REVISI';
+
+      if (matchedKey && map.has(matchedKey)) {
+        const entry = map.get(matchedKey);
+        entry.total_survei++;
+        if (isVerif) entry.terverifikasi++;
+        else if (isRevisi) entry.revisi++;
+        else entry.pending++;
+
+        if (surveyDate) {
+          if (!entry.terakhir_input || new Date(surveyDate) > new Date(entry.terakhir_input)) {
+            entry.terakhir_input = surveyDate;
+          }
+        }
+      } else {
+        // Jika survei dibuat oleh nama petugas yang belum terdaftar di master akun
+        const rawNama = survey.petugas_nama || survey.nama_petugas || "Petugas Lapangan";
+        const key = rawNama.toLowerCase().trim();
+        if (!map.has(key)) {
+          map.set(key, {
+            id: survey.created_by || survey.petugas_id || `PTG-${key}`,
+            id_petugas: survey.petugas_id || "-",
+            nama: rawNama,
+            username: survey.created_by || "-",
+            rw: survey.rw || "-",
+            rt: survey.rt || "-",
+            wilayah_tugas: survey.rw ? `RW ${survey.rw}` : "-",
+            telepon: "-",
+            avatar: "👤",
+            total_survei: 0,
+            terverifikasi: 0,
+            pending: 0,
+            revisi: 0,
+            terakhir_input: null,
+            userRef: null
+          });
+        }
+        const entry = map.get(key);
+        entry.total_survei++;
+        if (isVerif) entry.terverifikasi++;
+        else if (isRevisi) entry.revisi++;
+        else entry.pending++;
+
+        if (surveyDate) {
+          if (!entry.terakhir_input || new Date(surveyDate) > new Date(entry.terakhir_input)) {
+            entry.terakhir_input = surveyDate;
+          }
+        }
+      }
+    });
+
+    const petugasList = Array.from(map.values()).sort((a, b) => {
+      if (b.total_survei !== a.total_survei) return b.total_survei - a.total_survei;
+      return a.nama.localeCompare(b.nama);
+    });
+
+    const activePetugasList = petugasList.filter(p => p.total_survei > 0);
+    const topPetugas = activePetugasList.length > 0 ? activePetugasList[0] : null;
+
+    return {
+      petugasList,
+      activePetugasList,
+      totalPetugasCount: petugasList.length,
+      activePetugasCount: activePetugasList.length,
+      topPetugas,
+      totalSurveys: list.length
+    };
+  },
+
   exportToCSV(customList = null) {
     let list = customList;
     if (!list) {

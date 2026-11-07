@@ -14,12 +14,14 @@ import { renderLoginFasih, bindLoginFasihEvents } from "./components/LoginFasih.
 import { renderMemberManagement, initMemberManagementEvents } from "./components/MemberManagement.js";
 import { renderProfile, initProfileEvents } from "./components/Profile.js";
 import { renderDatabaseBackup, initDatabaseBackupEvents } from "./components/DatabaseBackup.js";
+import { renderPetugasAnalysisPage, initPetugasAnalysisPageEvents } from "./components/PetugasAnalysis.js";
 
 // Global App State
 let state = {
   currentRole: storage.getCurrentRole(),
   activeTab: storage.getCurrentRole() === "admin" ? "dashboard" : "new-survey",
   editingSurveyId: null,
+  selectedPetugasFilter: null,
   activeModal: null, // 'detail' | 'print' | 'rekap_bnba' | null
   modalSurveyId: null,
   rekapSelectedRw: "ALL"
@@ -108,7 +110,18 @@ function render() {
       onPrintSurvey: handlePrintSurvey,
       onPrintRekap: handlePrintRekap,
       onNewSurvey: handleNewSurvey,
+      initialPetugasFilter: state.selectedPetugasFilter,
       showToast
+    });
+    state.selectedPetugasFilter = null;
+  } else if (state.activeTab === "kinerja-petugas" && (currentRole === "admin" || currentRole === "pegawai")) {
+    contentContainer.innerHTML = renderPetugasAnalysisPage();
+    initPetugasAnalysisPageEvents(contentContainer, {
+      onViewSurveys: (petugasId, petugasNama) => {
+        state.selectedPetugasFilter = petugasNama || petugasId;
+        state.activeTab = "surveys";
+        render();
+      }
     });
   } else if (state.activeTab === "new-survey") {
     const editData = state.editingSurveyId ? storage.getSurveyById(state.editingSurveyId) : null;
