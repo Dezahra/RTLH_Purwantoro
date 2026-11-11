@@ -9,6 +9,7 @@ import { renderSurveyForm, initSurveyFormEvents } from "./components/SurveyForm.
 import { renderDetailModal, initDetailModalEvents } from "./components/DetailModal.js";
 import { renderPrintReport, initPrintReportEvents } from "./components/PrintReport.js";
 import { renderPrintRekapBnba, initPrintRekapBnbaEvents } from "./components/PrintRekapBnba.js";
+import { renderPrintRekapKinerja, initPrintRekapKinerjaEvents } from "./components/PrintRekapKinerja.js";
 import { renderLoginFasih, bindLoginFasihEvents } from "./components/LoginFasih.js";
 import { renderMemberManagement, initMemberManagementEvents } from "./components/MemberManagement.js";
 import { renderProfile, initProfileEvents } from "./components/Profile.js";
@@ -120,6 +121,10 @@ function render() {
         state.selectedPetugasFilter = petugasNama || petugasId;
         state.activeTab = "surveys";
         render();
+      },
+      onPrintRekap: () => {
+        state.activeModal = "rekap_kinerja";
+        renderModals();
       }
     });
   } else if (state.activeTab === "new-survey") {
@@ -217,6 +222,14 @@ function renderModals() {
   } else if (state.activeModal === "rekap_bnba") {
     modalRoot.innerHTML = renderPrintRekapBnba(state.rekapSelectedRw || "ALL");
     initPrintRekapBnbaEvents(modalRoot, {
+      onClose: () => {
+        state.activeModal = null;
+        modalRoot.innerHTML = "";
+      }
+    });
+  } else if (state.activeModal === "rekap_kinerja") {
+    modalRoot.innerHTML = renderPrintRekapKinerja();
+    initPrintRekapKinerjaEvents(modalRoot, {
       onClose: () => {
         state.activeModal = null;
         modalRoot.innerHTML = "";

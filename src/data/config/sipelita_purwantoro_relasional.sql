@@ -214,7 +214,7 @@ VALUES (
   'admin',
   'admin',
   '$2b$10$90PreEvslTOdndC08owVr.3BqLGdLOXUfEECh4P5ING2.1TfyFPBG',
-  'Devi Zahra Safrida',
+  'admin',
   '19880415 201201 1 002',
   'ADM-001',
   'Kasi Kesejahteraan / Pegawai Kelurahan',

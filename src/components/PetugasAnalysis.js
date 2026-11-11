@@ -147,7 +147,7 @@ export function renderPetugasAnalysisPage() {
 /**
  * Event Listener Halaman Analisis Kinerja Petugas
  */
-export function initPetugasAnalysisPageEvents(container, { onViewSurveys }) {
+export function initPetugasAnalysisPageEvents(container, { onViewSurveys, onPrintRekap }) {
   const searchInput = container.querySelector("#search-petugas-input");
   const statusFilter = container.querySelector("#filter-petugas-status");
   const tbody = container.querySelector("#petugas-table-body");
@@ -292,7 +292,9 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys }) {
 
   if (btnPrint) {
     btnPrint.addEventListener("click", () => {
-      window.print();
+      if (typeof onPrintRekap === "function") {
+        onPrintRekap();
+      }
     });
   }
 }

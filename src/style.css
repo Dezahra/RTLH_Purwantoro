@@ -3737,7 +3737,8 @@ textarea.auth-input {
   }
 
   /* Tampilkan hanya wadah cetak surat */
-  #print-modal-backdrop {
+  #print-modal-backdrop,
+  #print-rekap-modal-backdrop {
     position: static !important;
     display: block !important;
     background: transparent !important;
@@ -3749,7 +3750,8 @@ textarea.auth-input {
     border: none !important;
   }
 
-  #print-modal-backdrop .modal-dialog {
+  #print-modal-backdrop .modal-dialog,
+  #print-rekap-modal-backdrop .modal-dialog {
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
@@ -3759,7 +3761,8 @@ textarea.auth-input {
     background: transparent !important;
   }
 
-  #print-modal-backdrop .modal-body {
+  #print-modal-backdrop .modal-body,
+  #print-rekap-modal-backdrop .modal-body {
     padding: 0 !important;
     margin: 0 !important;
     font-size: 10pt !important;

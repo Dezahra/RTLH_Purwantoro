@@ -9,8 +9,8 @@ export function renderPrintRekapBnba(selectedRw = "ALL") {
   });
 
   const allSurveys = storage.getSurveys();
-  const surveys = selectedRw === "ALL" 
-    ? allSurveys 
+  const surveys = selectedRw === "ALL"
+    ? allSurveys
     : allSurveys.filter(s => String(s.rw || "").padStart(2, "0") === selectedRw);
 
   // Sorting berdasarkan No. BNBA
@@ -149,7 +149,7 @@ export function renderPrintRekapBnba(selectedRw = "ALL") {
                 <div>Mengetahui / Memverifikasi,</div>
                 <div style="font-weight: bold; margin-top: 1px;">Kasi Pemberdayaan Masyarakat & Kesra</div>
                 <div style="height: 55px;"></div>
-                <div style="font-weight: bold; text-decoration: underline;">DEVI ZAHRA SAFRIDA</div>
+                <div style="font-weight: bold; text-decoration: underline;">admin</div>
                 <div style="font-size: 8pt; color: #333;">NIP. 19880415 201201 1 002</div>
               </div>
 

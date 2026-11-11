@@ -12,7 +12,7 @@ export const initialRegisteredUsers = [
     "role": "admin",
     "username": "admin",
     "password": "password123",
-    "nama": "Devi Zahra Safrida",
+    "nama": "admin",
     "nip": "19880415 201201 1 002",
     "jabatan": "Kasi Kesejahteraan / Pegawai Kelurahan",
     "desa": "Kelurahan Purwantoro",
@@ -777,7 +777,7 @@ export const storage = {
       const msg = err.message || "";
       // Jika terjadi duplikasi NIK atau kesalahan validasi dari server, lemparkan error agar pengguna mengetahui
       if (
-        msg.includes("sudah terdata") || 
+        msg.includes("sudah terdata") ||
         msg.includes("sudah digunakan") ||
         msg.includes("NIK") ||
         msg.includes("basis data") ||
@@ -1256,7 +1256,7 @@ export const storage = {
   getPetugasStats() {
     const list = this.getSurveys();
     const users = this.getUsers();
-    
+
     // Ambil semua akun petugas dari data pengguna
     const petugasUsers = users.filter(u => u.role === 'petugas');
     const map = new Map();
@@ -1547,7 +1547,7 @@ export const storage = {
     } else {
       drafts.unshift(draftItem);
     }
-    
+
     try {
       localStorage.setItem("sipelita_offline_drafts_v1", JSON.stringify(drafts));
     } catch (e) {
