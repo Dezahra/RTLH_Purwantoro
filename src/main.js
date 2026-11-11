@@ -9,7 +9,6 @@ import { renderSurveyForm, initSurveyFormEvents } from "./components/SurveyForm.
 import { renderDetailModal, initDetailModalEvents } from "./components/DetailModal.js";
 import { renderPrintReport, initPrintReportEvents } from "./components/PrintReport.js";
 import { renderPrintRekapBnba, initPrintRekapBnbaEvents } from "./components/PrintRekapBnba.js";
-import { renderTechnicalGuide } from "./components/TechnicalGuide.js";
 import { renderLoginFasih, bindLoginFasihEvents } from "./components/LoginFasih.js";
 import { renderMemberManagement, initMemberManagementEvents } from "./components/MemberManagement.js";
 import { renderProfile, initProfileEvents } from "./components/Profile.js";
@@ -139,8 +138,6 @@ function render() {
         render();
       }
     });
-  } else if (state.activeTab === "guide") {
-    contentContainer.innerHTML = renderTechnicalGuide();
   } else if (state.activeTab === "members" && currentRole === "admin") {
     contentContainer.innerHTML = renderMemberManagement();
     initMemberManagementEvents(contentContainer, {
