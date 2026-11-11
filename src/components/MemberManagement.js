@@ -719,7 +719,7 @@ export function initMemberManagementEvents(container, { showToast, onStateChange
                   </select>
                 </div>
                 <small style="font-size:0.72rem; color:var(--dark-500); display:block; margin-top:0.35rem;">
-                  ℹ️ Petugas dapat ditugaskan ke wilayah RW yang sama untuk mencakup RT binaan yang berbeda.
+                  ℹ️ Petugas dapat ditugaskan ke wilayah RW yang sama untuk pembagian wilayah RT yang berbeda.
                 </small>
               </div>
 

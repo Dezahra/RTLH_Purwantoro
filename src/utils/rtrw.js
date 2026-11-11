@@ -48,7 +48,7 @@ export async function initRtRwDropdowns(container, savedRw = '', savedRt = '') {
     // Jika yang login adalah Petugas:
     // Kunci nomor RW sesuai wilayah penugasan, namun buka pilihan RT dengan penanda RT binaan utama
     if (isPetugas && assignedRw) {
-        rwSelect.innerHTML = `<option value="${assignedRw}" selected>RW ${assignedRw} (Wilayah Tugas Anda)</option>`;
+        rwSelect.innerHTML = `<option value="${assignedRw}" selected>RW ${assignedRw}</option>`;
         rwSelect.value = assignedRw;
 
         rwSelect.disabled = false;
@@ -61,17 +61,9 @@ export async function initRtRwDropdowns(container, savedRw = '', savedRt = '') {
         const rtsInRw = masterRtRwPurwantoro[assignedRw] || ["01", "02", "03", "04"];
         const curRt = savedRt ? String(savedRt).padStart(2, '0') : '';
 
-        // Parse RT binaan jika petugas memiliki alokasi RT spesifik (misal: "01, 02, 06")
-        const assignedRtList = (currentUser?.rt || '')
-            .split(/[,;\s]+/)
-            .map(r => r.trim().padStart(2, '0'))
-            .filter(Boolean);
-
         rtSelect.innerHTML = '<option value="">-- Pilih RT --</option>' +
             rtsInRw.map(rt => {
-                const isBinaan = assignedRtList.includes(rt);
-                const label = `RT ${rt}` + (isBinaan ? ' ⭐ (Binaan Anda)' : '');
-                return `<option value="${rt}" ${curRt === rt ? 'selected' : ''}>${label}</option>`;
+                return `<option value="${rt}" ${curRt === rt ? 'selected' : ''}>RT ${rt}</option>`;
             }).join("");
 
         rtSelect.disabled = false;
@@ -82,8 +74,6 @@ export async function initRtRwDropdowns(container, savedRw = '', savedRt = '') {
 
         if (curRt && rtsInRw.includes(curRt)) {
             rtSelect.value = curRt;
-        } else if (!curRt && assignedRtList.length === 1 && rtsInRw.includes(assignedRtList[0])) {
-            rtSelect.value = assignedRtList[0];
         }
         return;
     }
