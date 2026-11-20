@@ -3,6 +3,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `survey_parameter_scores`;
 DROP TABLE IF EXISTS `survey_photos`;
 DROP TABLE IF EXISTS `survey_verifications`;
+DROP TABLE IF EXISTS `activity_logs`;
 DROP TABLE IF EXISTS `kriteria_penilaian`;
 DROP TABLE IF EXISTS `surveys`;
 DROP TABLE IF EXISTS `users`;
@@ -58,7 +59,7 @@ CREATE TABLE `users` (
 
 -- 3. TABEL SURVEI RTLH (Relasi ke users dan rt_rws)
 CREATE TABLE `surveys` (
-  `id` VARCHAR(30) PRIMARY KEY,
+  `id` VARCHAR(64) PRIMARY KEY,
   `tanggal_survey` DATE NOT NULL,
   `created_by` VARCHAR(30) DEFAULT NULL,
   `petugas_nama` VARCHAR(150) DEFAULT NULL,
@@ -131,7 +132,7 @@ CREATE TABLE `surveys` (
 -- 4. TABEL DOKUMENTASI FOTO (Relasi ke surveys)
 CREATE TABLE `survey_photos` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `survey_id` VARCHAR(30) NOT NULL,
+  `survey_id` VARCHAR(64) NOT NULL,
   `slot` VARCHAR(30) NOT NULL,
   `file_url` MEDIUMTEXT NOT NULL,
   `caption` VARCHAR(255) DEFAULT NULL,
@@ -144,7 +145,7 @@ CREATE TABLE `survey_photos` (
 -- 5. TABEL RIWAYAT VERIFIKASI (Relasi ke surveys dan users)
 CREATE TABLE `survey_verifications` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `survey_id` VARCHAR(30) NOT NULL,
+  `survey_id` VARCHAR(64) NOT NULL,
   `verifier_id` VARCHAR(30) DEFAULT NULL,
   `verifier_nama` VARCHAR(150) DEFAULT NULL,
   `status_sebelumnya` VARCHAR(50) DEFAULT NULL,
@@ -172,7 +173,7 @@ CREATE TABLE `kriteria_penilaian` (
 -- 7. TABEL DETAIL SKOR PARAMETER (Relasi ke surveys dan kriteria_penilaian)
 CREATE TABLE `survey_parameter_scores` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `survey_id` VARCHAR(30) NOT NULL,
+  `survey_id` VARCHAR(64) NOT NULL,
   `kriteria_id` INT NOT NULL,
   `nilai_opsi` VARCHAR(100) DEFAULT NULL,
   `skor` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
@@ -185,9 +186,33 @@ CREATE TABLE `survey_parameter_scores` (
   CONSTRAINT `fk_scores_kriteria` FOREIGN KEY (`kriteria_id`) REFERENCES `kriteria_penilaian` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 8. TABEL AUDIT LOG AKTIVITAS & PEMULIHAN DATA
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_id` VARCHAR(50) DEFAULT NULL,
+  `user_nama` VARCHAR(150) DEFAULT NULL,
+  `user_role` VARCHAR(50) DEFAULT 'petugas',
+  `action` VARCHAR(50) NOT NULL,
+  `survey_id` VARCHAR(64) DEFAULT NULL,
+  `nik` VARCHAR(25) DEFAULT NULL,
+  `nama_kk` VARCHAR(150) DEFAULT NULL,
+  `rw` VARCHAR(10) DEFAULT NULL,
+  `rt` VARCHAR(10) DEFAULT NULL,
+  `status` ENUM('SUCCESS', 'FAILED') NOT NULL DEFAULT 'SUCCESS',
+  `message` TEXT DEFAULT NULL,
+  `payload_backup` LONGTEXT DEFAULT NULL,
+  `ip_address` VARCHAR(50) DEFAULT NULL,
+  `user_agent` VARCHAR(255) DEFAULT NULL,
+  INDEX `idx_logs_action` (`action`),
+  INDEX `idx_logs_survey` (`survey_id`),
+  INDEX `idx_logs_nik` (`nik`),
+  INDEX `idx_logs_created` (`timestamp`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- =========================================================
--- 8. DATA AWAL (SEED DATA): 13 PARAMETER PUPR
+-- 9. DATA AWAL (SEED DATA): 13 PARAMETER PUPR
 -- =========================================================
 INSERT INTO `kriteria_penilaian` (`id`, `kode`, `nama_parameter`, `pilar`, `bobot_persen`, `standar_kelayakan`) VALUES
 (1, 'pondasi', 'Pondasi Bangunan', 'KESELAMATAN_STRUKTUR', 10.00, 'Pondasi batu kali/beton bertulang kondisi baik tanpa retak struktur.'),
@@ -206,7 +231,7 @@ INSERT INTO `kriteria_penilaian` (`id`, `kode`, `nama_parameter`, `pilar`, `bobo
 ON DUPLICATE KEY UPDATE `nama_parameter` = VALUES(`nama_parameter`);
 
 -- =========================================================
--- 9. DATA AWAL (SEED DATA): PENGGUNA DEFAULT (ADMIN)
+-- 10. DATA AWAL (SEED DATA): PENGGUNA DEFAULT (ADMIN)
 -- =========================================================
 INSERT INTO `users` (`id`, `role`, `username`, `password`, `nama`, `nip`, `id_petugas`, `jabatan`, `desa`, `kecamatan`, `kabupaten`, `telepon`, `email`, `status`, `avatar`, `registered_at`, `approved_at`, `approved_by`)
 VALUES (
@@ -233,7 +258,7 @@ ON DUPLICATE KEY UPDATE `password` = VALUES(`password`), `status` = 'APPROVED';
 
 
 -- =========================================================
--- 10. DATA AWAL (SEED DATA): 24 PETUGAS PURWANTORO
+-- 11. DATA AWAL (SEED DATA): 24 PETUGAS PURWANTORO
 -- =========================================================
 INSERT INTO `users` (`id`, `role`, `username`, `password`, `nama`, `id_petugas`, `jabatan`, `rw`, `rt`, `wilayah_tugas`, `desa`, `kecamatan`, `kabupaten`, `telepon`, `email`, `status`, `avatar`, `registered_at`, `approved_at`, `approved_by`) VALUES
 ('USR-PTG-01', 'petugas', 'isma.harianti', '$2b$10$90PreEvslTOdndC08owVr.3BqLGdLOXUfEECh4P5ING2.1TfyFPBG', 'ISMA HARIANTI', 'PETUGAS-01', 'Petugas Surveyor Lapangan', '04', '01, 02, 03', 'RW 04 (RT 01, 02, 03)', 'Kelurahan Purwantoro', 'Kecamatan Blimbing', 'Kota Malang', '081234567890', 'isma.harianti@purwantoro.malangkota.go.id', 'APPROVED', '👤', NOW(), NOW(), 'Sistem Otomatis'),
