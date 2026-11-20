@@ -320,7 +320,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       const rawData = event.target.result;
       const img = new Image();
       img.onload = () => {
-        const maxDim = 1200;
+        const maxDim = 800;
         let width = img.width;
         let height = img.height;
         if (width > maxDim || height > maxDim) {
@@ -337,7 +337,8 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        // Kompresi optimal: ~60-80KB per foto, sangat hemat memori HP & kuota pengiriman
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.65);
         applyPhotoToSlot(targetSlot, compressedDataUrl);
       };
       img.src = rawData;
@@ -507,7 +508,7 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       flashEl.style.opacity = "0.85";
       setTimeout(() => { flashEl.style.opacity = "0"; }, 150);
 
-      const maxDim = 1200;
+      const maxDim = 800;
       let width = videoEl.videoWidth;
       let height = videoEl.videoHeight;
       if (width > maxDim || height > maxDim) {
@@ -525,7 +526,8 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
       const ctx = canvasEl.getContext("2d");
       ctx.drawImage(videoEl, 0, 0, width, height);
 
-      capturedDataUrl = canvasEl.toDataURL("image/jpeg", 0.85);
+      // Kompresi optimal WebRTC: ~60-80KB per foto
+      capturedDataUrl = canvasEl.toDataURL("image/jpeg", 0.65);
 
       videoEl.style.display = "none";
       canvasEl.style.display = "block";

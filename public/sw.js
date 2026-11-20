@@ -38,8 +38,8 @@ self.addEventListener('fetch', (event) => {
   // Jangan tangani permintaan selain GET
   if (req.method !== 'GET') return;
 
-  // Jangan cache panggilan API dinamis ke backend PHP / MySQL
-  if (url.pathname.includes('/src/data/api/') || url.port === '8000') {
+  // Jangan cache panggilan API dinamis ke backend Node / Express / MySQL
+  if (url.pathname.startsWith('/api/') || url.pathname.includes('/src/data/api/') || url.port === '8000') {
     return;
   }
 

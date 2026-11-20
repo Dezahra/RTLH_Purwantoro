@@ -36,7 +36,7 @@ function formatDateReadable(d = new Date()) {
 // -----------------------------------------------------------------------------
 async function handleStats(req, res) {
   try {
-    const tables = ["surveys", "users", "rt_rws", "survey_photos", "survey_verifications", "kriteria_penilaian"];
+    const tables = ["surveys", "users", "rt_rws", "survey_photos", "survey_verifications", "activity_logs", "kriteria_penilaian"];
     const counts = {};
 
     for (const tbl of tables) {
@@ -113,7 +113,7 @@ async function handleDownloadZip(req, res) {
     const zipFilename = `SIPELITA_PURWANTORO_BACKUP_${timestamp}.zip`;
     const dbname = process.env.DB_NAME || "sipelita_desa";
 
-    const tablesToDump = ["rt_rws", "users", "kriteria_penilaian", "surveys", "survey_photos", "survey_verifications"];
+    const tablesToDump = ["rt_rws", "users", "kriteria_penilaian", "surveys", "survey_photos", "survey_verifications", "activity_logs"];
     const existingTables = [];
 
     for (const t of tablesToDump) {

@@ -321,6 +321,22 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
   checkOfflineDraftsBanner();
   checkRevisionAlertBanner();
 
+  // Otomatis sinkronkan draf offline jika peranti terhubung ke internet
+  if (typeof window !== "undefined" && window.navigator && window.navigator.onLine) {
+    const drafts = storage.getOfflineDrafts(currentUser);
+    if (drafts && drafts.length > 0) {
+      storage.syncOfflineDrafts(currentUser).then(res => {
+        if (res.successCount > 0) {
+          if (typeof showToast === "function") {
+            showToast(`⚡ ${res.successCount} berkas survei offline Anda otomatis berhasil disinkronkan ke server.`);
+          }
+          checkOfflineDraftsBanner();
+          renderRows();
+        }
+      }).catch(() => {});
+    }
+  }
+
   let currentPage = 1;
   let pageSize = 10;
 
@@ -341,10 +357,11 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     const filtered = list.filter(item => {
       // Filter RW
       if (rwVal !== "ALL") {
-        const itemRw = String(item.rw || "").padStart(2, "0");
-        if (itemRw !== rwVal) {
+        const cleanItemRw = String(item.rw || "").replace(/\D/g, "").padStart(2, "0");
+        const cleanRwVal = String(rwVal).replace(/\D/g, "").padStart(2, "0");
+        if (cleanItemRw !== cleanRwVal) {
           // Toleransi jika item.rw di database sempat kosong tapi petugas yang menginput ditugaskan di RW ini
-          if ((!item.rw || item.rw === "") && isPetugas && currentUser?.rw && String(currentUser.rw).padStart(2, "0") === rwVal) {
+          if ((!cleanItemRw || cleanItemRw === "00") && isPetugas && currentUser?.rw && String(currentUser.rw).replace(/\D/g, "").padStart(2, "0") === cleanRwVal) {
             // Loloskan
           } else {
             return false;
@@ -353,10 +370,11 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       }
       // Filter RT
       if (rtVal !== "ALL") {
-        const itemRt = String(item.rt || "").padStart(2, "0");
-        if (itemRt !== rtVal) {
+        const cleanItemRt = String(item.rt || "").replace(/\D/g, "").padStart(2, "0");
+        const cleanRtVal = String(rtVal).replace(/\D/g, "").padStart(2, "0");
+        if (cleanItemRt !== cleanRtVal) {
           // Toleransi jika item.rt di database sempat kosong tapi petugas yang menginput ditugaskan di RT ini
-          if ((!item.rt || item.rt === "") && isPetugas && currentUser?.rt && String(currentUser.rt).padStart(2, "0") === rtVal) {
+          if ((!cleanItemRt || cleanItemRt === "00") && isPetugas && currentUser?.rt && String(currentUser.rt).replace(/\D/g, "").padStart(2, "0") === cleanRtVal) {
             // Loloskan
           } else {
             return false;
@@ -452,9 +470,15 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     if (btnLast) btnLast.disabled = currentPage >= totalPages;
 
     if (countInfo) {
-      countInfo.textContent = isPetugas
-        ? `Menampilkan ${filtered.length} dari ${list.length} data survey Anda`
-        : `Menampilkan ${filtered.length} dari ${list.length} data rumah`;
+      if (isPetugas) {
+        if (rtVal !== "ALL") {
+          countInfo.textContent = `Menampilkan ${filtered.length} data di RT ${rtVal} (Total: ${list.length} data survei Anda)`;
+        } else {
+          countInfo.textContent = `Menampilkan ${filtered.length} dari ${list.length} data survei Anda`;
+        }
+      } else {
+        countInfo.textContent = `Menampilkan ${filtered.length} dari ${list.length} data rumah`;
+      }
     }
 
     if (!tableBody) return;
@@ -506,11 +530,13 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
               <div>
                 <div style="font-weight:800; color:var(--dark-900); font-size:0.9rem;">${item.nama_kk}</div>
                 <div style="font-size:0.75rem; color:var(--dark-600);">NIK: ${item.nik}</div>
-                <div style="display:flex; align-items:center; gap:0.35rem; margin-top:2px;">
-                  <span class="badge badge-info" style="font-size:0.68rem; font-family:monospace; padding:1px 6px;" title="No. Urut BNBA">
+                <div style="display:flex; align-items:center; gap:0.4rem; margin-top:2px; flex-wrap:wrap;">
+                  <span class="badge badge-info" style="font-size:0.7rem; font-family:monospace; font-weight:700; padding:1px 6px;" title="No. Urut BNBA Resmi">
                     ${item.no_urut_bnba || '-'}
                   </span>
-                  <span style="font-size:0.7rem; color:var(--dark-500); font-family:monospace;">${item.id}</span>
+                  <span style="font-size:0.68rem; color:var(--dark-500); font-family:monospace;" title="ID Sistem: ${item.id}">
+                    ${item.id && item.id.length > 20 ? item.id.slice(0, 16) + '…' : (item.id || '')}
+                  </span>
                 </div>
               </div>
             </div>

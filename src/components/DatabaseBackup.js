@@ -139,6 +139,46 @@ export function renderDatabaseBackup() {
 
       </div>
 
+      <!-- SECTION LOG AKTIVITAS PETUGAS & AUDIT TRAIL (UNTUK CEK GAGAL INPUT / PULIHKAN DATA HILANG) -->
+      <div class="card" style="border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-top: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <div style="font-weight: 800; font-size: 1.05rem; color: var(--dark-900); display: flex; align-items: center; gap: 0.5rem;">
+              <span>📜</span> Log Aktivitas Lapangan & Pemulihan Data
+            </div>
+            <div style="font-size: 0.78rem; color: var(--dark-600); margin-top: 2px;">
+              Mencatat seluruh rekaman submit, update, hapus, dan kegagalan jaringan petugas. Data yang terhapus atau gagal submit dapat dipulihkan sewaktu-waktu.
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="filter-log-nik" placeholder="Cari NIK / Nama..." style="padding: 0.4rem 0.75rem; font-size: 0.8rem; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); max-width: 180px;">
+            <button type="button" class="btn btn-secondary" id="btn-refresh-logs" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; cursor: pointer;">
+              ${icons.refresh('w-3.5 h-3.5')} Segarkan Log
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid var(--gray-200); text-align: left; color: var(--dark-700);">
+                <th style="padding: 0.65rem 0.75rem;">Waktu</th>
+                <th style="padding: 0.65rem 0.75rem;">Petugas</th>
+                <th style="padding: 0.65rem 0.75rem;">Aksi</th>
+                <th style="padding: 0.65rem 0.75rem;">Warga (NIK / RW)</th>
+                <th style="padding: 0.65rem 0.75rem;">Status / Pesan</th>
+                <th style="padding: 0.65rem 0.75rem; text-align: center;">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="table-activity-logs-body">
+              <tr>
+                <td colspan="6" style="padding: 1.5rem; text-align: center; color: var(--dark-400);">Memuat log aktivitas...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   `;
 }
@@ -379,6 +419,113 @@ export function initDatabaseBackupEvents(container, { showToast, onStateChange }
           restoreLabel.textContent = "Pilih Berkas & Unggah Sinkronisasi";
         }
       }
+    });
+  }
+
+  // 5. Muat dan Tampilkan Log Aktivitas & Pemulihan Data Lapangan
+  const logTableBody = container.querySelector("#table-activity-logs-body");
+  const filterLogNik = container.querySelector("#filter-log-nik");
+  const btnRefreshLogs = container.querySelector("#btn-refresh-logs");
+
+  async function loadActivityLogs() {
+    if (!logTableBody) return;
+    try {
+      const q = filterLogNik?.value?.trim() || "";
+      const logs = await storage.getActivityLogs(q ? { nik: q } : {});
+      if (!logs || logs.length === 0) {
+        logTableBody.innerHTML = `<tr><td colspan="6" style="padding: 1.5rem; text-align: center; color: var(--dark-400);">Belum ada catatan log aktivitas tersimpan.</td></tr>`;
+        return;
+      }
+
+      logTableBody.innerHTML = logs.map(l => {
+        const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleString("id-ID") : "-";
+        const badgeColor = l.status === "SUCCESS" ? "#059669" : "#dc2626";
+        const badgeBg = l.status === "SUCCESS" ? "#ecfdf5" : "#fef2f2";
+
+        let actionLabel = l.action;
+        if (l.action === "INPUT_SURVEY") actionLabel = "📝 Input Baru";
+        else if (l.action === "UPDATE_SURVEY") actionLabel = "✏️ Pembaruan/Revisi";
+        else if (l.action === "DELETE_SURVEY") actionLabel = "🗑️ Hapus Survei";
+        else if (l.action === "REJECTED_DUPLICATE") actionLabel = "⚠️ Ditolak Duplikat";
+        else if (l.action === "SAVE_ERROR") actionLabel = "❌ Gagal Simpan";
+        else if (l.action === "VERIFY_SURVEY") actionLabel = "✅ Verifikasi";
+
+        return `
+          <tr style="border-bottom: 1px solid var(--gray-200);">
+            <td style="padding: 0.6rem 0.75rem; white-space: nowrap; font-size: 0.75rem; color: var(--dark-600);">${timeStr}</td>
+            <td style="padding: 0.6rem 0.75rem; font-weight: 700; color: var(--dark-800);">${l.user_nama || "Petugas Lapangan"}</td>
+            <td style="padding: 0.6rem 0.75rem; font-weight: 600;">${actionLabel}</td>
+            <td style="padding: 0.6rem 0.75rem;">
+              <div style="font-weight: 700; color: var(--dark-900);">${l.nama_kk || "-"}</div>
+              <div style="font-size: 0.72rem; color: var(--dark-500); font-family: monospace;">NIK: ${l.nik || "-"} ${l.rw ? `| RW ${l.rw}` : ""}</div>
+            </td>
+            <td style="padding: 0.6rem 0.75rem;">
+              <span style="display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; background: ${badgeBg}; color: ${badgeColor}; margin-bottom: 2px;">
+                ${l.status}
+              </span>
+              <div style="font-size: 0.72rem; color: var(--dark-500); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${l.message || ''}">
+                ${l.message || "-"}
+              </div>
+            </td>
+            <td style="padding: 0.6rem 0.75rem; text-align: center; white-space: nowrap;">
+              ${l.has_backup ? `
+                <button type="button" class="btn btn-sm btn-restore-from-log" data-log-id="${l.id}" data-warga="${l.nama_kk || l.nik || ''}" style="padding: 3px 8px; font-size: 0.72rem; background: #059669; color: white; border: none; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px;">
+                  🔄 Pulihkan
+                </button>
+              ` : `
+                <span style="font-size: 0.7rem; color: var(--dark-400);">-</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      // Bind tombol pulihkan dari log
+      logTableBody.querySelectorAll(".btn-restore-from-log").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const logId = btn.dataset.logId;
+          const warga = btn.dataset.warga || "data warga";
+          if (!confirm(`Konfirmasi Pemulihan Data:\n\nApakah Anda yakin ingin memulihkan kembali data survei untuk:\n"${warga}"?\n\nData survei lengkap akan dipulihkan ke basis data sistem.`)) {
+            return;
+          }
+          btn.disabled = true;
+          btn.textContent = "Memulihkan...";
+          try {
+            const res = await storage.restoreSurveyFromLog(logId);
+            if (typeof showToast === "function") {
+              showToast(res.message || "Data survei berhasil dipulihkan!");
+            } else {
+              alert(res.message || "Data survei berhasil dipulihkan!");
+            }
+            if (typeof onStateChange === "function") {
+              onStateChange();
+            }
+            await loadActivityLogs();
+            await loadDatabaseStats();
+          } catch (err) {
+            alert("Gagal memulihkan survei: " + err.message);
+            btn.disabled = false;
+            btn.textContent = "🔄 Pulihkan";
+          }
+        });
+      });
+
+    } catch (e) {
+      console.warn("Gagal memuat activity logs:", e);
+      if (logTableBody) {
+        logTableBody.innerHTML = `<tr><td colspan="6" style="padding: 1.5rem; text-align: center; color: var(--dark-400);">Gagal memuat log aktivitas: ${e.message}</td></tr>`;
+      }
+    }
+  }
+
+  loadActivityLogs();
+
+  if (btnRefreshLogs) {
+    btnRefreshLogs.addEventListener("click", () => loadActivityLogs());
+  }
+  if (filterLogNik) {
+    filterLogNik.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") loadActivityLogs();
     });
   }
 }

@@ -124,7 +124,11 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
     "KOORDINAT LONGITUDE",
     "AKURASI GPS (M)",
     "STATUS VERIFIKASI",
-    "CATATAN ADMIN / VERIFIKATOR"
+    "CATATAN ADMIN / VERIFIKATOR",
+    "LINK FOTO DEPAN",
+    "LINK FOTO INTERIOR",
+    "LINK FOTO ATAP",
+    "LINK FOTO SANITASI"
   ];
 
   lines.push(headers.map(h => `"${h}"`).join(sep));
@@ -183,7 +187,11 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
       item.longitude || "",
       item.akurasi_gps || "0",
       item.status_verifikasi || "MENUNGGU_VALIDASI",
-      item.catatan_admin || "-"
+      item.catatan_admin || "-",
+      item.foto_depan || "-",
+      item.foto_dalam || "-",
+      item.foto_atap || "-",
+      item.foto_sanitasi || "-"
     ];
 
     lines.push(row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(sep));
@@ -202,7 +210,7 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
  */
 export function exportSurveysToExcel(surveys, meta = {}) {
   const kop = generateKopMetadata({ ...meta, totalCount: surveys.length });
-  const colCount = 44;
+  const colCount = 51;
 
   const headers = [
     "NO", "NO. BNBA", "ID SURVEI", "TANGGAL SURVEI", "PETUGAS SURVEYOR",
@@ -215,7 +223,8 @@ export function exportSurveysToExcel(surveys, meta = {}) {
     "DINDING", "LANTAI", "SANITASI", "JENIS KLOSET", "TPA TINJA", "SUMBER AIR", "PENCAHAYAAN", "PENGHAWAAN",
     "LUAS BGN (M2)", "LUAS/JIWA (M2)", "KECUKUPAN RUANG", "SEMPADAN SUNGAI",
     "SPAL", "LISTRIK", "LATITUDE", "LONGITUDE", "AKURASI GPS (M)",
-    "STATUS VERIFIKASI", "CATATAN ADMIN / VERIFIKATOR"
+    "STATUS VERIFIKASI", "CATATAN ADMIN / VERIFIKATOR",
+    "FOTO TAMPAK DEPAN", "FOTO DINDING & LANTAI", "FOTO RANGKA ATAP", "FOTO SANITASI"
   ];
 
   let rowsHtml = "";
@@ -279,6 +288,10 @@ export function exportSurveysToExcel(surveys, meta = {}) {
         <td class="td-center">${item.akurasi_gps || "0"}</td>
         <td class="td-center" style="color:${badgeColor}; font-weight:bold;">${escapeHtml(item.status_verifikasi || "MENUNGGU_VALIDASI")}</td>
         <td class="td-cell">${escapeHtml(item.catatan_admin || "-")}</td>
+        <td class="td-cell">${item.foto_depan ? escapeHtml(item.foto_depan) : "-"}</td>
+        <td class="td-cell">${item.foto_dalam ? escapeHtml(item.foto_dalam) : "-"}</td>
+        <td class="td-cell">${item.foto_atap ? escapeHtml(item.foto_atap) : "-"}</td>
+        <td class="td-cell">${item.foto_sanitasi ? escapeHtml(item.foto_sanitasi) : "-"}</td>
       </tr>
     `;
   });

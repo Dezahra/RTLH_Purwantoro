@@ -410,27 +410,59 @@ export function renderPrintReport(survey) {
             </tbody>
           </table>
 
-          <!-- Attachments: 2 key photos -->
-          <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-            <div style="flex: 1; text-align: center; border: 1px solid #999; padding: 3px;">
-              ${survey.foto_depan && !survey.foto_depan.includes('sample-images') ? `
-                <img src="${survey.foto_depan}" style="width: 100%; height: 95px; object-fit: cover; display:block;" alt="Foto Depan" />
-              ` : `
-                <div style="width: 100%; height: 95px; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#64748b; font-size:7.5pt; border:1px dashed #cbd5e1;">
-                  [Belum Ada Foto Tampak Depan]
-                </div>
-              `}
-              <div style="font-size: 7.5pt; margin-top: 2px; font-weight: bold;">Dokumentasi 1: Tampak Depan Bangunan Rumah</div>
+          <!-- Attachments: 4 Sudut Pandang Foto Lapangan Lengkap -->
+          <div style="margin-bottom: 12px; page-break-inside: avoid;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 4px; text-transform: uppercase;">
+              DOKUMENTASI VISUAL LAPANGAN (4 SUDUT PANDANG):
             </div>
-            <div style="flex: 1; text-align: center; border: 1px solid #999; padding: 3px;">
-              ${(survey.foto_atap || survey.foto_dalam) && !(survey.foto_atap || survey.foto_dalam).includes('sample-images') ? `
-                <img src="${survey.foto_atap || survey.foto_dalam}" style="width: 100%; height: 95px; object-fit: cover; display:block;" alt="Foto Kerusakan" />
-              ` : `
-                <div style="width: 100%; height: 95px; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#64748b; font-size:7.5pt; border:1px dashed #cbd5e1;">
-                  [Belum Ada Foto Kerusakan / Atap]
-                </div>
-              `}
-              <div style="font-size: 7.5pt; margin-top: 2px; font-weight: bold;">Dokumentasi 2: Kondisi Struktur / Atap / Sanitasi</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+              <!-- 1. Foto Tampak Depan -->
+              <div style="text-align: center; border: 1px solid #777; padding: 3px; background: #fff; border-radius: 2px;">
+                ${survey.foto_depan && !survey.foto_depan.includes('sample-images') ? `
+                  <img src="${survey.foto_depan}" style="width: 100%; height: 90px; object-fit: cover; display:block;" alt="Foto Depan" />
+                ` : `
+                  <div style="width: 100%; height: 90px; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#64748b; font-size:7pt; border:1px dashed #cbd5e1; text-align:center; padding:4px;">
+                    [Belum Ada Foto Depan]
+                  </div>
+                `}
+                <div style="font-size: 7pt; margin-top: 3px; font-weight: bold; line-height: 1.2;">1. Tampak Depan</div>
+              </div>
+
+              <!-- 2. Foto Dinding & Lantai -->
+              <div style="text-align: center; border: 1px solid #777; padding: 3px; background: #fff; border-radius: 2px;">
+                ${survey.foto_dalam && !survey.foto_dalam.includes('sample-images') ? `
+                  <img src="${survey.foto_dalam}" style="width: 100%; height: 90px; object-fit: cover; display:block;" alt="Dinding & Lantai" />
+                ` : `
+                  <div style="width: 100%; height: 90px; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#64748b; font-size:7pt; border:1px dashed #cbd5e1; text-align:center; padding:4px;">
+                    [Belum Ada Foto Interior]
+                  </div>
+                `}
+                <div style="font-size: 7pt; margin-top: 3px; font-weight: bold; line-height: 1.2;">2. Dinding & Lantai</div>
+              </div>
+
+              <!-- 3. Foto Atap & Struktur -->
+              <div style="text-align: center; border: 1px solid #777; padding: 3px; background: #fff; border-radius: 2px;">
+                ${survey.foto_atap && !survey.foto_atap.includes('sample-images') ? `
+                  <img src="${survey.foto_atap}" style="width: 100%; height: 90px; object-fit: cover; display:block;" alt="Rangka Atap" />
+                ` : `
+                  <div style="width: 100%; height: 90px; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#64748b; font-size:7pt; border:1px dashed #cbd5e1; text-align:center; padding:4px;">
+                    [Belum Ada Foto Atap]
+                  </div>
+                `}
+                <div style="font-size: 7pt; margin-top: 3px; font-weight: bold; line-height: 1.2;">3. Atap & Rangka</div>
+              </div>
+
+              <!-- 4. Foto Toilet & Sanitasi -->
+              <div style="text-align: center; border: 1px solid #777; padding: 3px; background: #fff; border-radius: 2px;">
+                ${survey.foto_sanitasi && !survey.foto_sanitasi.includes('sample-images') ? `
+                  <img src="${survey.foto_sanitasi}" style="width: 100%; height: 90px; object-fit: cover; display:block;" alt="Sanitasi / Toilet" />
+                ` : `
+                  <div style="width: 100%; height: 90px; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#64748b; font-size:7pt; border:1px dashed #cbd5e1; text-align:center; padding:4px;">
+                    [Belum Ada Foto Sanitasi]
+                  </div>
+                `}
+                <div style="font-size: 7pt; margin-top: 3px; font-weight: bold; line-height: 1.2;">4. Toilet & Sanitasi</div>
+              </div>
             </div>
           </div>
 

@@ -37,3 +37,11 @@ vendor/
 # Temporary and backup files
 *.bak
 *.tmp
+
+# Uploaded survey photos
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/surveys/
+public/uploads/surveys/*
+!public/uploads/surveys/.gitkeep
+

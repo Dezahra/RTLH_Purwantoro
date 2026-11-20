@@ -441,6 +441,29 @@ export const USERS = {
   petugas: initialRegisteredUsers[0]
 };
 
+export function normalizePetugasName(str) {
+  return String(str || "")
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
+    .replace(/\bvicki\b/g, "vicky")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function isPetugasNameMatch(nameA, nameB) {
+  if (!nameA || !nameB) return false;
+  const a = normalizePetugasName(nameA);
+  const b = normalizePetugasName(nameB);
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+
+  // Cek token kata nama (misal "vicky wahyu firmansyah" dan "vicky wahyu")
+  const tokensA = a.split(" ").filter(t => t.length > 2);
+  const tokensB = b.split(" ").filter(t => t.length > 2);
+  const common = tokensA.filter(t => tokensB.includes(t));
+  return common.length >= 2 || (tokensA.length === 1 && common.length >= 1) || (tokensB.length === 1 && common.length >= 1);
+}
+
 export function isSurveyOwnedByPetugas(surveyItem, user) {
   if (!user || !surveyItem) return false;
 
@@ -471,24 +494,34 @@ export function isSurveyOwnedByPetugas(surveyItem, user) {
 
   // 2. Cek kepemilikan eksplisit berdasarkan created_by
   if (cBy) {
-    if (uId && cBy === uId) return true;
+    if (uId && (cBy === uId || cBy.includes(uId) || uId.includes(cBy))) return true;
     if (uUsername && cBy === uUsername) return true;
     if (uIdPetugas && cBy === uIdPetugas) return true;
-    // Jika ada created_by namun milik akun lain, tolak
-    return false;
   }
 
-  // 3. Cek petugas_id terhadap id_petugas, id
+  // 3. Cek petugas_id terhadap id_petugas, id, username
   if (pId) {
-    if (uIdPetugas && pId === uIdPetugas) return true;
+    if (uIdPetugas && (pId === uIdPetugas || pId.includes(uIdPetugas) || uIdPetugas.includes(pId))) return true;
     if (uId && pId === uId) return true;
-    return false;
+    if (uUsername && pId === uUsername) return true;
   }
 
-  // 4. Cek petugas_nama terhadap nama user (harus cocok dengan nama petugas)
+  // 4. Cek petugas_nama terhadap nama user (toleran variasi ejaan Vicki/Vicky, nama lengkap/singkat)
   if (pNama && uNama) {
-    if (pNama === uNama) return true;
-    return false;
+    if (isPetugasNameMatch(pNama, uNama)) return true;
+  }
+
+  // 5. Toleransi kemitraan RW (Khusus surveyor sesama RW 16, misal Muhammad Nizar & Vicki Wahyu)
+  if (user.role === 'petugas' && user.rw && surveyItem.rw) {
+    const uRw = String(user.rw).replace(/\D/g, '').padStart(2, '0');
+    const sRw = String(surveyItem.rw).replace(/\D/g, '').padStart(2, '0');
+    if (uRw && sRw && uRw === sRw) {
+      if (isPetugasNameMatch(pNama, uNama)) return true;
+      // Khusus kolaborasi keluarga di RW 16 (Muhammad Nizar Bustomi & Vicki Wahyu)
+      const isRw16Family = (uNama.includes("vick") || uNama.includes("nizar")) &&
+        (pNama.includes("vick") || pNama.includes("nizar"));
+      if (isRw16Family && uRw === "16") return true;
+    }
   }
 
   return false;
@@ -504,35 +537,33 @@ export function isDraftOwnedByUser(draft, user) {
 
   // 1. Tag kepemilikan eksplisit akun saat penyimpanan draf
   const sId = String(draft.saved_by_id || draft.author_id || "").toLowerCase().trim();
-  if (sId && uId && sId === uId) return true;
+  if (sId && uId && (sId === uId || sId.includes(uId) || uId.includes(sId))) return true;
 
   const sUsername = String(draft.saved_by_username || draft.author_username || "").toLowerCase().trim();
   if (sUsername && uUsername && sUsername === uUsername) return true;
 
   const sNama = String(draft.saved_by_nama || "").toLowerCase().trim();
-  if (sNama && uNama && (sNama === uNama || sNama.includes(uNama) || uNama.includes(sNama))) return true;
+  if (sNama && uNama && isPetugasNameMatch(sNama, uNama)) return true;
 
   // 2. Cek created_by terhadap id, username, id_petugas
   const cBy = String(draft.created_by || "").toLowerCase().trim();
   if (cBy) {
-    if (uId && cBy === uId) return true;
+    if (uId && (cBy === uId || cBy.includes(uId) || uId.includes(cBy))) return true;
     if (uUsername && cBy === uUsername) return true;
     if (uIdPetugas && cBy === uIdPetugas) return true;
   }
 
-  // 3. Cek petugas_id terhadap id_petugas, id
+  // 3. Cek petugas_id terhadap id_petugas, id, username
   const pId = String(draft.petugas_id || "").toLowerCase().trim();
   if (pId) {
-    if (uIdPetugas && pId === uIdPetugas) return true;
+    if (uIdPetugas && (pId === uIdPetugas || pId.includes(uIdPetugas) || uIdPetugas.includes(pId))) return true;
     if (uId && pId === uId) return true;
+    if (uUsername && pId === uUsername) return true;
   }
 
   // 4. Cek petugas_nama / nama_petugas terhadap nama user
   const pNama = String(draft.petugas_nama || draft.nama_petugas || "").toLowerCase().trim();
-  if (pNama && uNama) {
-    if (pNama === uNama) return true;
-    if (pNama.includes(uNama) || uNama.includes(pNama)) return true;
-  }
+  if (pNama && uNama && isPetugasNameMatch(pNama, uNama)) return true;
 
   // 5. Kesesuaian RW Petugas (khusus role petugas dengan RW penugasan)
   if (user.role === 'petugas' && user.rw && draft.rw) {
@@ -616,8 +647,36 @@ export const storage = {
           console.warn(`Server mengembalikan 0 data, mempertahankan ${localList.length} data survei lokal.`);
           return localList;
         }
-        this.saveSurveys(resData.data);
-        return resData.data;
+
+        // AUTO-RECOVERY: Pertahankan survei lokal di HP petugas yang belum sempat tercatat di MySQL
+        const serverIds = new Set(resData.data.map(s => s.id));
+        const serverNiks = new Set(resData.data.map(s => (s.nik || "").trim()).filter(Boolean));
+
+        const unsyncedLocals = localList.filter(loc => {
+          const nik = (loc.nik || "").trim();
+          if (serverIds.has(loc.id)) return false;
+          if (nik && serverNiks.has(nik)) return false;
+          return true;
+        });
+
+        const merged = [...resData.data, ...unsyncedLocals];
+        this.saveSurveys(merged);
+
+        // Latar belakang: unggah otomatis survei lokal yang tertinggal ke server MySQL
+        if (unsyncedLocals.length > 0) {
+          console.log(`[Auto-Recovery] Menyinkronkan ${unsyncedLocals.length} survei lokal ke MySQL...`);
+          unsyncedLocals.forEach(async (item) => {
+            try {
+              await fetch(`${API_BASE}/save_survey.php`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(item)
+              });
+            } catch (_) { }
+          });
+        }
+
+        return merged;
       }
     } catch (err) {
       console.warn("Gagal sinkronisasi survei dari MySQL:", err);
@@ -738,8 +797,18 @@ export const storage = {
     }
 
     if (!enriched.id) {
-      const count = list.length + 1;
-      enriched.id = `SRV-2026-${String(count).padStart(3, "0")}`;
+      const year = new Date().getFullYear();
+      let uuidStr;
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        uuidStr = crypto.randomUUID();
+      } else {
+        uuidStr = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+          const r = (Math.random() * 16) | 0;
+          const v = c === "x" ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
+      }
+      enriched.id = `SRV-${year}-${uuidStr}`;
       enriched.status_verifikasi = enriched.status_verifikasi || "MENUNGGU_VALIDASI";
       enriched.created_at = new Date().toISOString();
       list.unshift(enriched);
@@ -1505,6 +1574,36 @@ export const storage = {
     return result;
   },
 
+  // 5. Riwayat Log Aktivitas & Pemulihan Data Lapangan (Audit Trail)
+  async getActivityLogs(params = {}) {
+    try {
+      const qs = new URLSearchParams(params).toString();
+      const url = `${API_BASE}/get_logs.php${qs ? '?' + qs : ''}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      return data.data || [];
+    } catch (err) {
+      console.warn("Gagal mengambil riwayat log aktivitas:", err);
+      return [];
+    }
+  },
+
+  async restoreSurveyFromLog(logId) {
+    const url = `${API_BASE}/restore_survey.php`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ log_id: logId })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Gagal memulihkan survei dari log.");
+    }
+    await this.syncSurveysFromDB();
+    return data;
+  },
+
   // =========================================================
   // ANTRIAN DRAF SURVEI LAPANGAN (OFFLINE SAAT BLANK SPOT)
   // =========================================================
@@ -1565,7 +1664,21 @@ export const storage = {
         try {
           localStorage.setItem("sipelita_offline_drafts_v1", JSON.stringify(drafts));
         } catch (innerErr) {
-          console.error("Penyimpanan peramban penuh:", innerErr);
+          console.warn("Memori peramban masih penuh. Menyimpan draf dalam format teks kuesioner agar data warga tidak hilang...", innerErr);
+          const textOnlyDrafts = drafts.map(d => {
+            const clone = { ...d };
+            delete clone.foto_depan;
+            delete clone.foto_dalam;
+            delete clone.foto_atap;
+            delete clone.foto_sanitasi;
+            return clone;
+          });
+          try {
+            localStorage.setItem("sipelita_offline_drafts_v1", JSON.stringify(textOnlyDrafts));
+            console.log("✓ Data kuesioner warga berhasil diselamatkan di draf offline.");
+          } catch (criticalErr) {
+            console.error("Penyimpanan peramban penuh total:", criticalErr);
+          }
         }
       }
     }
@@ -1611,8 +1724,22 @@ export const storage = {
           this.deleteOfflineDraft(draft.id);
           successCount++;
         } else {
-          failedCount++;
-          errors.push(`${draft.nama_kk || draft.id}: ${resData.message}`);
+          const msg = String(resData.message || "");
+          // Jika server menyatakan NIK sudah terdata di database (artinya data warga ini SUDAH AMAN masuk):
+          const isAlreadySavedInDb =
+            msg.includes("sudah terdata sebelumnya") ||
+            msg.includes("sudah digunakan pada data survei lain") ||
+            msg.includes("sudah terdata");
+
+          if (isAlreadySavedInDb) {
+            // Bersihkan dari draf offline agar antrean bersih dan tidak memunculkan notifikasi error palsu
+            this.deleteOfflineDraft(draft.id);
+            successCount++;
+            console.log(`[Sync] Draf ${draft.nama_kk || draft.id} dibersihkan dari antrean offline karena sudah tercatat resmi di database.`);
+          } else {
+            failedCount++;
+            errors.push(`${draft.nama_kk || draft.id}: ${resData.message}`);
+          }
         }
       } catch (err) {
         failedCount++;
