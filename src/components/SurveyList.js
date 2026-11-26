@@ -1,5 +1,5 @@
 import { icons } from "../utils/icons.js";
-import { storage, isSurveyOwnedByPetugas } from "../utils/storage.js";
+import { storage, isSurveyOwnedByPetugas, isPetugasNameMatch } from "../utils/storage.js";
 import { masterRtRwPurwantoro } from "../utils/rtrw.js";
 import { renderExportModal, initExportModalEvents } from "./ExportModal.js";
 import { formatDateIndo } from "../utils/dateHelper.js";
@@ -53,9 +53,9 @@ export function renderSurveyList() {
 
           <select class="form-select" id="list-filter-verif" style="width:auto; padding:0.55rem 0.85rem;">
             <option value="ALL">Semua Status Verifikasi</option>
-            <option value="MENUNGGU_VALIDASI"> Menunggu Validasi</option>
-            <option value="TERVERIFIKASI"> Terverifikasi</option>
-            <option value="BUTUH_REVISI"> Butuh Revisi</option>
+            <option value="MENUNGGU_VALIDASI">Menunggu</option>
+            <option value="TERVERIFIKASI">Terverifikasi / Termasuk RTLH</option>
+            <option value="BUKAN_RTLH">Bukan Termasuk RTLH</option>
           </select>
 
           ${!isPetugas ? `
@@ -302,7 +302,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
           <span>Terdapat <strong>${revCount} data survei</strong> Anda yang dikembalikan oleh pihak Kelurahan karena <strong>Butuh Revisi</strong>. Harap periksa catatan admin dan perbaiki.</span>
         </div>
         <button class="btn btn-sm" id="btn-quick-filter-revision" style="background:#dc2626; color:white; border-color:#dc2626; font-size:0.78rem; font-weight:800; padding:0.45rem 0.95rem; cursor:pointer;">
-          Lihat Data Butuh Revisi
+          Lihat Data Bukan Termasuk RTLH
         </button>
       </div>
     `;
@@ -310,7 +310,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     if (btnQuickRev) {
       btnQuickRev.addEventListener("click", () => {
         if (filterVerif) {
-          filterVerif.value = "BUTUH_REVISI";
+          filterVerif.value = "BUKAN_RTLH";
           currentPage = 1;
           renderRows();
         }
@@ -382,13 +382,43 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
         }
       }
       // Filter Verifikasi
-      if (v !== "ALL" && item.status_verifikasi !== v) return false;
+      if (v !== "ALL") {
+        if (v === "BUKAN_RTLH") {
+          if (item.status_verifikasi !== "BUKAN_RTLH" && item.status_verifikasi !== "BUTUH_REVISI") return false;
+        } else if (v === "MENUNGGU_VALIDASI") {
+          if (item.status_verifikasi && item.status_verifikasi !== "MENUNGGU_VALIDASI") return false;
+        } else if (item.status_verifikasi !== v) {
+          return false;
+        }
+      }
 
       // Filter Nama Petugas (Khusus Admin / Pegawai)
       if (!isPetugas && petugasVal !== "ALL") {
-        const itemPetugasNama = String(item.petugas_nama || item.nama_petugas || "").toLowerCase().trim();
+        const itemPetugasNama = String(item.petugas_nama || item.nama_petugas || item.surveyor_nama || "").toLowerCase().trim();
         const targetNama = petugasVal.toLowerCase().trim();
-        if (itemPetugasNama !== targetNama && !itemPetugasNama.includes(targetNama)) {
+        const targetUser = storage.getUsers().find(u => (u.nama || "").toLowerCase().trim() === targetNama);
+
+        const isMatch = (targetUser && isSurveyOwnedByPetugas(item, targetUser)) ||
+                        itemPetugasNama === targetNama ||
+                        isPetugasNameMatch(itemPetugasNama, targetNama);
+
+        // Jika nama di survei belum terisi, cek wilayah penugasan RW & RT petugas
+        let rwMatch = false;
+        if (!isMatch && item.rw && targetUser && targetUser.rw) {
+          const sRw = String(item.rw).replace(/\D/g, "").padStart(2, "0");
+          const uRw = String(targetUser.rw).replace(/\D/g, "").padStart(2, "0");
+          if (sRw === uRw) {
+            if (item.rt && targetUser.rt) {
+              const uRts = String(targetUser.rt).split(",").map(t => t.replace(/\D/g, "").padStart(2, "0")).filter(Boolean);
+              const sRt = String(item.rt).replace(/\D/g, "").padStart(2, "0");
+              if (uRts.includes(sRt)) rwMatch = true;
+            } else {
+              rwMatch = true;
+            }
+          }
+        }
+
+        if (!isMatch && !rwMatch) {
           return false;
         }
       }
@@ -506,11 +536,11 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
     }
 
     tableBody.innerHTML = pagedItems.map(item => {
-      let verifBadge = '<span class="badge badge-warning"> Menunggu Validasi</span>';
+      let verifBadge = '<span class="badge badge-warning">Menunggu</span>';
       if (item.status_verifikasi === "TERVERIFIKASI") {
-        verifBadge = '<span class="badge badge-success"> Terverifikasi</span>';
-      } else if (item.status_verifikasi === "BUTUH_REVISI") {
-        verifBadge = '<span class="badge badge-danger"> Butuh Revisi</span>';
+        verifBadge = '<span class="badge badge-success">✓ Terverifikasi / Termasuk RTLH</span>';
+      } else if (item.status_verifikasi === "BUKAN_RTLH" || item.status_verifikasi === "BUTUH_REVISI") {
+        verifBadge = '<span class="badge badge-danger">✕ Bukan Termasuk RTLH</span>';
       }
 
       return `
@@ -684,7 +714,7 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
                 <span>ℹ️</span>
                 <span>
                   Setelah diverifikasi, status data menjadi
-                  <strong>TERVERIFIKASI</strong>.
+                  <strong>TERVERIFIKASI / TERMASUK RTLH</strong>.
                 </span>
               </div>
 
@@ -762,29 +792,24 @@ export function initSurveyListEvents(container, { onSelectSurvey, onEditSurvey, 
       });
     });
 
-    // Minta revisi data survey
+    // Tandai Bukan Termasuk RTLH
     tableBody.querySelectorAll(".btn-action-revision").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
 
         const catatan = prompt(
-          "Masukkan catatan perbaikan untuk data survey:"
+          "Masukkan catatan verifikasi (Bukan Termasuk RTLH):"
         );
 
         if (catatan === null) return;
 
-        if (!catatan.trim()) {
-          alert("Catatan perbaikan wajib diisi.");
-          return;
-        }
-
         const updated = await storage.updateVerification(id, {
-          status: "BUTUH_REVISI",
-          catatanAdmin: catatan.trim()
+          status: "BUKAN_RTLH",
+          catatanAdmin: catatan.trim() || "Bukan Termasuk RTLH"
         });
 
         if (updated) {
-          showToast(`Data survey ${id} ditandai perlu revisi.`);
+          showToast(`Data survey ${id} ditandai Bukan Termasuk RTLH.`);
           renderRows();
         }
       });

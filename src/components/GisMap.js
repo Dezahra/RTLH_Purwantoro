@@ -57,18 +57,18 @@ export function renderGisMap() {
             <label class="map-filter-label">Filter Status Verifikasi</label>
             <select class="form-select" id="map-filter-status">
               <option value="ALL">Semua Status Verifikasi</option>
-              <option value="TERVERIFIKASI">🟢 Terverifikasi Valid</option>
-              <option value="MENUNGGU_VALIDASI">🟡 Menunggu Validasi</option>
-              <option value="BUTUH_REVISI">🔴 Butuh Revisi Lapangan</option>
+              <option value="TERVERIFIKASI">🟢 Terverifikasi / Termasuk RTLH</option>
+              <option value="MENUNGGU_VALIDASI">🟡 Menunggu</option>
+              <option value="BUKAN_RTLH">🔴 Bukan Termasuk RTLH</option>
             </select>
           </div>
 
           <!-- Legend -->
           <div class="map-legend" style="margin-bottom: 1rem;">
             <div style="font-weight: 700; margin-bottom: 0.35rem; color: var(--dark-800);">Legenda Titik:</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Terverifikasi Valid</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Menunggu Validasi</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Butuh Revisi Lapangan</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Terverifikasi / Termasuk RTLH</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Menunggu</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Bukan Termasuk RTLH</div>
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
@@ -209,7 +209,15 @@ export function initGisMap(container, { onSelectSurvey, onNewSurvey }) {
         if (itemRt !== rtVal) return false;
       }
       // Filter Status
-      if (sVal !== "ALL" && item.status_verifikasi !== sVal) return false;
+      if (sVal !== "ALL") {
+        if (sVal === "BUKAN_RTLH") {
+          if (item.status_verifikasi !== "BUKAN_RTLH" && item.status_verifikasi !== "BUTUH_REVISI") return false;
+        } else if (sVal === "MENUNGGU_VALIDASI") {
+          if (item.status_verifikasi && item.status_verifikasi !== "MENUNGGU_VALIDASI") return false;
+        } else if (item.status_verifikasi !== sVal) {
+          return false;
+        }
+      }
       // Search
       if (qVal) {
         const matchName = (item.nama_kk || "").toLowerCase().includes(qVal);
@@ -241,8 +249,8 @@ export function initGisMap(container, { onSelectSurvey, onNewSurvey }) {
                 <div style="font-weight:700; font-size:0.88rem; color:var(--dark-900);">${item.nama_kk}</div>
                 <div style="font-size:0.75rem; color:var(--dark-600);">RT ${item.rt ? String(item.rt).padStart(2, '0') : '-'} / RW ${item.rw ? String(item.rw).padStart(2, '0') : '-'}</div>
               </div>
-              <span class="badge ${item.status_verifikasi === 'TERVERIFIKASI' ? 'badge-success' : (item.status_verifikasi === 'BUTUH_REVISI' ? 'badge-danger' : 'badge-warning')}" style="font-size:0.68rem;">
-                ${item.status_verifikasi === 'TERVERIFIKASI' ? 'Terverifikasi' : (item.status_verifikasi === 'BUTUH_REVISI' ? 'Revisi' : 'Menunggu')}
+              <span class="badge ${item.status_verifikasi === 'TERVERIFIKASI' ? 'badge-success' : ((item.status_verifikasi === 'BUTUH_REVISI' || item.status_verifikasi === 'BUKAN_RTLH') ? 'badge-danger' : 'badge-warning')}" style="font-size:0.68rem;">
+                ${item.status_verifikasi === 'TERVERIFIKASI' ? 'Termasuk RTLH' : ((item.status_verifikasi === 'BUTUH_REVISI' || item.status_verifikasi === 'BUKAN_RTLH') ? 'Bukan RTLH' : 'Menunggu')}
               </span>
             </div>
             <div style="margin-top:0.35rem; font-size:0.72rem; color:var(--dark-600);">
@@ -271,7 +279,8 @@ export function initGisMap(container, { onSelectSurvey, onNewSurvey }) {
     // Add Leaflet Markers
     filtered.forEach(item => {
       if (item.latitude && item.longitude) {
-        const markerColor = item.status_verifikasi === 'TERVERIFIKASI' ? '#10b981' : (item.status_verifikasi === 'BUTUH_REVISI' ? '#ef4444' : '#f59e0b');
+        const isBukanRtlh = item.status_verifikasi === 'BUTUH_REVISI' || item.status_verifikasi === 'BUKAN_RTLH';
+        const markerColor = item.status_verifikasi === 'TERVERIFIKASI' ? '#10b981' : (isBukanRtlh ? '#ef4444' : '#f59e0b');
 
         // Create Custom HTML Pin Icon
         const customIcon = L.divIcon({
@@ -327,7 +336,7 @@ export function initGisMap(container, { onSelectSurvey, onNewSurvey }) {
                 background:${markerColor}; color:#fff; 
                 font-size:10px; font-weight:700; 
                 padding:2px 8px; border-radius:99px;
-              ">${item.status_verifikasi === 'TERVERIFIKASI' ? 'Terverifikasi' : (item.status_verifikasi === 'BUTUH_REVISI' ? 'Butuh Revisi' : 'Menunggu')}</span>
+              ">${item.status_verifikasi === 'TERVERIFIKASI' ? 'Termasuk RTLH' : (isBukanRtlh ? 'Bukan RTLH' : 'Menunggu')}</span>
             </div>
             <div style="font-weight:800; font-size:13px; color:#0f172a; margin-bottom:2px;">
               ${item.nama_kk}
@@ -340,7 +349,7 @@ export function initGisMap(container, { onSelectSurvey, onNewSurvey }) {
               font-size:11px; font-weight:700; 
               color:${markerColor}; margin-bottom:6px;
             ">
-              ${item.status_verifikasi === 'TERVERIFIKASI' ? '✓ Terverifikasi Valid' : (item.status_verifikasi === 'BUTUH_REVISI' ? '⚠️ Butuh Revisi Lapangan' : ' Menunggu Validasi')}
+              ${item.status_verifikasi === 'TERVERIFIKASI' ? '✓ Terverifikasi / Termasuk RTLH' : (isBukanRtlh ? '✕ Bukan Termasuk RTLH' : '⏳ Menunggu')}
             </div>
             <button class="btn-popup-detail" data-id="${item.id}" style="
               width:100%; background:#047857; color:white; border:none; 

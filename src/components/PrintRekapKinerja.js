@@ -85,9 +85,9 @@ export function renderPrintRekapKinerja() {
           <div style="margin-bottom: 12px; font-size: 9pt; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border: 1px solid #333; padding: 6px 10px; background: #fafafa;">
             <div>Total Berkas Masuk: <strong>${totalSurveys} Unit</strong></div>
             <div>Petugas Aktif: <strong>${activePetugasCount} / ${totalPetugasCount} Orang</strong></div>
-            <div>Terverifikasi Valid: <strong>${totalValid} Unit</strong></div>
-            <div>Menunggu Validasi: <strong>${totalPending} Unit</strong></div>
-            <div>Butuh Revisi: <strong>${totalRevisi} Unit</strong></div>
+            <div>Terverifikasi / Termasuk RTLH: <strong>${totalValid} Unit</strong></div>
+            <div>Menunggu: <strong>${totalPending} Unit</strong></div>
+            <div>Bukan Termasuk RTLH: <strong>${totalRevisi} Unit</strong></div>
           </div>
 
           <!-- Tabel Rekapitulasi Kinerja -->
@@ -127,9 +127,9 @@ export function renderPrintRekapKinerja() {
                       <div style="font-size: 7.5pt; font-weight: normal; color: #444;">(${pct}% kontribusi)</div>
                     </td>
                     <td style="border: 1px solid #000; padding: 4px 6px; font-size: 8pt;">
-                      <div>• Valid: <strong>${p.terverifikasi}</strong> unit</div>
+                      <div>• Termasuk RTLH: <strong>${p.terverifikasi}</strong> unit</div>
                       <div>• Menunggu: <strong>${p.pending}</strong> unit</div>
-                      <div>• Revisi: <strong>${p.revisi}</strong> unit</div>
+                      <div>• Bukan RTLH: <strong>${p.revisi}</strong> unit</div>
                     </td>
                     <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 8pt;">
                       ${p.terakhir_input ? formatDateIndo(p.terakhir_input, 'short') : '-'}

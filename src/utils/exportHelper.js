@@ -28,6 +28,12 @@ function downloadBlob(blob, filename) {
   }, 500);
 }
 
+export function formatVerifStatus(status) {
+  if (status === "TERVERIFIKASI") return "Terverifikasi / Termasuk RTLH";
+  if (status === "BUKAN_RTLH" || status === "BUTUH_REVISI") return "Bukan Termasuk RTLH";
+  return "Menunggu";
+}
+
 export function generateKopMetadata(meta = {}) {
   const now = new Date();
   const dateFormatted = now.toLocaleDateString("id-ID", {
@@ -186,7 +192,7 @@ export function exportSurveysToCSV(surveys, meta = {}, delimiter = ";") {
       item.latitude || "",
       item.longitude || "",
       item.akurasi_gps || "0",
-      item.status_verifikasi || "MENUNGGU_VALIDASI",
+      formatVerifStatus(item.status_verifikasi),
       item.catatan_admin || "-",
       item.foto_depan || "-",
       item.foto_dalam || "-",
@@ -237,7 +243,7 @@ export function exportSurveysToExcel(surveys, meta = {}) {
 
     let badgeColor = "#0284c7";
     if (item.status_verifikasi === "TERVERIFIKASI") badgeColor = "#059669";
-    else if (item.status_verifikasi === "BUTUH_REVISI") badgeColor = "#dc2626";
+    else if (item.status_verifikasi === "BUTUH_REVISI" || item.status_verifikasi === "BUKAN_RTLH") badgeColor = "#dc2626";
 
     rowsHtml += `
       <tr ${bgRow}>
@@ -286,7 +292,7 @@ export function exportSurveysToExcel(surveys, meta = {}) {
         <td class="td-number">${item.latitude || ""}</td>
         <td class="td-number">${item.longitude || ""}</td>
         <td class="td-center">${item.akurasi_gps || "0"}</td>
-        <td class="td-center" style="color:${badgeColor}; font-weight:bold;">${escapeHtml(item.status_verifikasi || "MENUNGGU_VALIDASI")}</td>
+        <td class="td-center" style="color:${badgeColor}; font-weight:bold;">${escapeHtml(formatVerifStatus(item.status_verifikasi))}</td>
         <td class="td-cell">${escapeHtml(item.catatan_admin || "-")}</td>
         <td class="td-cell">${item.foto_depan ? escapeHtml(item.foto_depan) : "-"}</td>
         <td class="td-cell">${item.foto_dalam ? escapeHtml(item.foto_dalam) : "-"}</td>

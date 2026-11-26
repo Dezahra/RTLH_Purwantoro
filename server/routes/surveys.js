@@ -3,7 +3,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { pool } from "../db.js";
+import { pool, standardizeAllSurveyIds } from "../db.js";
 
 const router = Router();
 
@@ -80,6 +80,41 @@ export function saveBase64PhotoToDisk(surveyId, slot, photoStr) {
     console.error(`Gagal menulis foto slot ${slot} ke disk:`, err.message);
     return null;
   }
+}
+
+/**
+ * Menghasilkan ID survei berurutan format resmi: SRV-YYYY-XXXX (4 digit padding)
+ * Mendukung kapasitas ribuan data (1500+ data).
+ */
+export async function getNextSequentialSurveyId(pool) {
+  const currentYear = new Date().getFullYear();
+  let maxSeq = 0;
+  try {
+    const [rows] = await pool.query(
+      "SELECT id FROM surveys WHERE id LIKE ? ORDER BY id DESC LIMIT 1000",
+      [`SRV-${currentYear}-%`]
+    );
+    for (const r of rows) {
+      const match = String(r.id || "").match(new RegExp(`^SRV-${currentYear}-(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxSeq) maxSeq = num;
+      }
+    }
+    if (maxSeq === 0) {
+      const [bnbaRows] = await pool.query(
+        "SELECT no_urut_bnba FROM surveys WHERE no_urut_bnba IS NOT NULL ORDER BY id DESC LIMIT 1000"
+      );
+      for (const r of bnbaRows) {
+        const match = String(r.no_urut_bnba || "").match(/(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      }
+    }
+  } catch (_) {}
+  return `SRV-${currentYear}-${String(maxSeq + 1).padStart(4, "0")}`;
 }
 
 /**
@@ -297,22 +332,22 @@ async function handleSaveSurvey(req, res) {
         const existingNik = (oldRows[0].nik || "").trim();
         const incomingNik = (data.nik || "").trim();
         if (incomingNik && existingNik && incomingNik !== existingNik) {
-          console.warn(`[Collision Prevented] ID ${data.id} sudah ada untuk NIK ${existingNik}. Data baru dengan NIK ${incomingNik} dialokasikan UUID baru.`);
+          console.warn(`[Collision Prevented] ID ${data.id} sudah ada untuk NIK ${existingNik}. Data baru dengan NIK ${incomingNik} dialokasikan ID berurutan baru.`);
           isNew = true;
-          data.id = "SRV-" + new Date().getFullYear() + "-" + crypto.randomUUID();
+          data.id = await getNextSequentialSurveyId(pool);
         }
       }
     }
 
     if (isNew) {
       if (!data.id) {
-        data.id = "SRV-" + new Date().getFullYear() + "-" + crypto.randomUUID();
+        data.id = await getNextSequentialSurveyId(pool);
       }
       data.status_verifikasi = data.status_verifikasi || "MENUNGGU_VALIDASI";
       data.created_at = now;
     } else {
-      // Auto-transition dari BUTUH_REVISI ke MENUNGGU_VALIDASI saat diperbaiki
-      if (oldRows.length > 0 && oldRows[0].status_verifikasi === "BUTUH_REVISI") {
+      // Auto-transition dari BUTUH_REVISI / BUKAN_RTLH ke MENUNGGU_VALIDASI saat diperbaiki
+      if (oldRows.length > 0 && (oldRows[0].status_verifikasi === "BUTUH_REVISI" || oldRows[0].status_verifikasi === "BUKAN_RTLH")) {
         data.status_verifikasi = "MENUNGGU_VALIDASI";
         data.revision_at = now;
         const existingNote = oldRows[0].catatan_admin || "";
@@ -351,8 +386,8 @@ async function handleSaveSurvey(req, res) {
           data.id = existing.id; // Hubungkan ke ID survei yang sudah ada di database
           data.no_urut_bnba = existing.no_urut_bnba; // Pertahankan nomor BNBA resmi warga ini
 
-          // Jika status sebelumnya BUTUH_REVISI, otomatis alihkan ke MENUNGGU_VALIDASI
-          if (existing.status_verifikasi === "BUTUH_REVISI") {
+          // Jika status sebelumnya BUTUH_REVISI atau BUKAN_RTLH, otomatis alihkan ke MENUNGGU_VALIDASI
+          if (existing.status_verifikasi === "BUTUH_REVISI" || existing.status_verifikasi === "BUKAN_RTLH") {
             data.status_verifikasi = "MENUNGGU_VALIDASI";
             data.revision_at = now;
             const existingNote = existing.catatan_admin || "";
@@ -402,9 +437,19 @@ async function handleSaveSurvey(req, res) {
     }
 
     if (needNewBnba) {
-      const [[maxRow]] = await pool.query("SELECT MAX(CAST(SUBSTRING(no_urut_bnba, 11) AS UNSIGNED)) AS maxNum FROM surveys WHERE no_urut_bnba LIKE 'BNBA-%'");
-      const nextCount = (maxRow.maxNum || 0) + 1;
-      data.no_urut_bnba = `BNBA-${new Date().getFullYear()}-${String(nextCount).padStart(3, "0")}`;
+      let maxNum = 0;
+      try {
+        const [rows] = await pool.query("SELECT no_urut_bnba FROM surveys WHERE no_urut_bnba LIKE 'BNBA-%'");
+        for (const r of rows) {
+          const m = String(r.no_urut_bnba || "").match(/(\d+)$/);
+          if (m) {
+            const val = parseInt(m[1], 10);
+            if (val > maxNum) maxNum = val;
+          }
+        }
+      } catch (_) {}
+      const nextCount = maxNum + 1;
+      data.no_urut_bnba = `BNBA-${new Date().getFullYear()}-${String(nextCount).padStart(4, "0")}`;
     }
     data.updated_at = now;
 
@@ -424,12 +469,21 @@ async function handleSaveSurvey(req, res) {
     }
 
     if (!validUserId && namaPetugas) {
-      const [userRows] = await pool.query(
-        "SELECT id FROM users WHERE LOWER(TRIM(nama)) = LOWER(TRIM(?)) OR nama LIKE ? LIMIT 1",
-        [namaPetugas, `%${namaPetugas}%`]
-      );
-      if (userRows.length > 0) {
-        validUserId = userRows[0].id;
+      const rwVal = data.rw ? String(data.rw).replace(/\D/g, "").padStart(2, "0") : null;
+      if (rwVal) {
+        // Cocokkan nama dan RW penugasan terlebih dahulu agar petugas dengan nama serupa di RW lain tidak tertukar
+        const [userRows] = await pool.query(
+          "SELECT id FROM users WHERE (LOWER(TRIM(nama)) = LOWER(TRIM(?)) OR LOWER(TRIM(id_petugas)) = LOWER(TRIM(?))) AND rw = ? LIMIT 1",
+          [namaPetugas, namaPetugas, rwVal]
+        );
+        if (userRows.length > 0) validUserId = userRows[0].id;
+      }
+      if (!validUserId) {
+        const [userRows] = await pool.query(
+          "SELECT id FROM users WHERE LOWER(TRIM(nama)) = LOWER(TRIM(?)) OR LOWER(TRIM(id_petugas)) = LOWER(TRIM(?)) LIMIT 1",
+          [namaPetugas, namaPetugas]
+        );
+        if (userRows.length > 0) validUserId = userRows[0].id;
       }
     }
 
@@ -466,13 +520,62 @@ async function handleSaveSurvey(req, res) {
     }
 
     data.aset_rumah_lain = data.aset_rumah_lain || "Tidak";
-    data.lama_tinggal = parseInt(data.lama_tinggal || 1, 10);
     data.alamat_lengkap = data.alamat_lengkap || data.dusun || null;
-    data.jumlah_lansia_balita = parseInt(data.jumlah_lansia_balita || 0, 10);
     data.bansos_diterima = data.bansos_diterima || "Belum Pernah";
     data.jenis_kloset = data.jenis_kloset || "1. Leher angsa";
     data.tpa_tinja = data.tpa_tinja || "1. Tangki septik";
     data.sempadan_sungai = data.sempadan_sungai || "Tidak (≥ 6 meter / Aman)";
+
+    // Sanitasi data numerik & integritas kolom agar 100% kompatibel dengan MySQL Strict Mode
+    data.jumlah_jiwa = (data.jumlah_jiwa === "" || data.jumlah_jiwa == null) ? 1 : Math.max(1, parseInt(data.jumlah_jiwa, 10) || 1);
+    data.jumlah_lansia_balita = (data.jumlah_lansia_balita === "" || data.jumlah_lansia_balita == null) ? 0 : Math.max(0, parseInt(data.jumlah_lansia_balita, 10) || 0);
+    data.lama_tinggal = (data.lama_tinggal === "" || data.lama_tinggal == null) ? 1 : Math.max(1, parseInt(data.lama_tinggal, 10) || 1);
+
+    if (data.usia === "" || data.usia == null || isNaN(parseInt(data.usia, 10))) {
+      data.usia = null;
+    } else {
+      data.usia = parseInt(data.usia, 10);
+    }
+
+    if (data.luas_bangunan === "" || data.luas_bangunan == null || isNaN(parseFloat(data.luas_bangunan))) {
+      data.luas_bangunan = null;
+    } else {
+      data.luas_bangunan = parseFloat(data.luas_bangunan);
+    }
+
+    if (data.luas_per_jiwa === "" || data.luas_per_jiwa == null || isNaN(parseFloat(data.luas_per_jiwa))) {
+      if (data.luas_bangunan && data.jumlah_jiwa) {
+        data.luas_per_jiwa = parseFloat((data.luas_bangunan / data.jumlah_jiwa).toFixed(1));
+      } else {
+        data.luas_per_jiwa = null;
+      }
+    } else {
+      data.luas_per_jiwa = parseFloat(data.luas_per_jiwa);
+    }
+
+    if (data.skor_total === "" || data.skor_total == null || isNaN(parseFloat(data.skor_total))) {
+      data.skor_total = null;
+    } else {
+      data.skor_total = parseFloat(data.skor_total);
+    }
+
+    if (data.latitude === "" || data.latitude == null || isNaN(parseFloat(data.latitude))) {
+      data.latitude = null;
+    } else {
+      data.latitude = parseFloat(data.latitude);
+    }
+
+    if (data.longitude === "" || data.longitude == null || isNaN(parseFloat(data.longitude))) {
+      data.longitude = null;
+    } else {
+      data.longitude = parseFloat(data.longitude);
+    }
+
+    if (!data.verified_at || data.verified_at === "") data.verified_at = null;
+    if (!data.revision_at || data.revision_at === "") data.revision_at = null;
+    if (data.nik !== undefined && data.nik !== null) data.nik = String(data.nik).trim() || "-";
+    if (data.no_kk !== undefined && data.no_kk !== null) data.no_kk = String(data.no_kk).trim() || "-";
+    if (data.nama_kk !== undefined && data.nama_kk !== null) data.nama_kk = String(data.nama_kk).trim() || "-";
 
     // Resolusi rt_rw_id
     let rtRwId = null;
@@ -515,8 +618,12 @@ async function handleSaveSurvey(req, res) {
       "foto_depan", "foto_dalam", "foto_atap", "foto_sanitasi"
     ];
 
-    // Deteksi kolom yang benar-benar ada di tabel surveys MySQL secara dinamis
+    // Deteksi kolom dan tipe data tabel surveys MySQL secara dinamis
     const [dbCols] = await pool.query("DESCRIBE surveys");
+    const colTypeMap = new Map();
+    dbCols.forEach(c => {
+      colTypeMap.set(c.Field, (c.Type || "").toLowerCase());
+    });
     const actualDbCols = new Set(dbCols.map(c => c.Field));
 
     const insertCols = [];
@@ -528,7 +635,16 @@ async function handleSaveSurvey(req, res) {
       if (!actualDbCols.has(col)) continue;
       insertCols.push(col);
       placeholders.push("?");
-      values.push(data[col] !== undefined ? data[col] : null);
+
+      let val = data[col] !== undefined ? data[col] : null;
+      const colType = colTypeMap.get(col) || "";
+      const isNumericOrDate = /int|decimal|float|double|numeric|date|time|year/.test(colType);
+
+      // MySQL Strict Mode: jika kolom bertipe angka/tanggal dan nilai adalah string kosong '', ganti menjadi null
+      if (val === "" && isNumericOrDate) {
+        val = null;
+      }
+      values.push(val);
 
       if (col !== "id") {
         updateClauses.push(`${col} = VALUES(${col})`);
@@ -700,7 +816,7 @@ async function handleUpdateVerification(req, res) {
   try {
     const now = new Date().toISOString().slice(0, 19).replace("T", " ");
     const verifiedAt = status === "TERVERIFIKASI" ? now : null;
-    const revisionAt = status === "BUTUH_REVISI" ? now : null;
+    const revisionAt = (status === "BUTUH_REVISI" || status === "BUKAN_RTLH") ? now : null;
 
     const [prevRows] = await pool.query("SELECT * FROM surveys WHERE id = ?", [id]);
     const prevStatus = prevRows[0]?.status_verifikasi || "MENUNGGU_VALIDASI";
@@ -851,6 +967,22 @@ async function handleRestoreFromLog(req, res) {
   }
 }
 
+async function handleStandardizeIds(req, res) {
+  try {
+    const result = await standardizeAllSurveyIds(pool);
+    res.json({
+      success: true,
+      message: `Berhasil menstandarkan ${result.updated} dari ${result.count} data survei ke format SRV-YYYY-XXXX.`,
+      result
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Gagal menstandarkan ID survei: " + err.message
+    });
+  }
+}
+
 // Route mapping (mendukung REST modern & alias PHP)
 router.get("/", handleGetSurveys);
 router.get("/get_surveys.php", handleGetSurveys);
@@ -865,6 +997,11 @@ router.delete("/:id", handleDeleteSurvey);
 router.post("/verify", handleUpdateVerification);
 router.post("/update_verification.php", handleUpdateVerification);
 router.put("/:id/verify", handleUpdateVerification);
+
+// Rute Standardisasi ID Survei (SRV-YYYY-XXXX & BNBA-YYYY-XXXX)
+router.post("/standardize-ids", handleStandardizeIds);
+router.post("/standardize_ids.php", handleStandardizeIds);
+router.get("/standardize-ids", handleStandardizeIds);
 
 // Rute Log Aktivitas & Pemulihan Data
 router.get("/logs", handleGetActivityLogs);

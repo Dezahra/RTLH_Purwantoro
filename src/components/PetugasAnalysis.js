@@ -21,7 +21,7 @@ export function renderPetugasAnalysisPage() {
             <span class="kpi-title">Total Data Terinput</span>
             <div class="kpi-icon-wrap" style="color:#2563eb;">${icons.clipboard('w-5 h-5')}</div>
           </div>
-          <div class="kpi-value" style="color:#1e3a8a;">
+          <div class="kpi-value" style="color:#1e3a8a;" id="kpi-val-total-surveys">
             ${totalSurveys} <span style="font-size:0.85rem; font-weight:600; color:#64748b;">Berkas</span>
           </div>
           <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">
@@ -34,10 +34,10 @@ export function renderPetugasAnalysisPage() {
             <span class="kpi-title">Petugas Aktif Menginput</span>
             <div class="kpi-icon-wrap" style="color:#10b981;">${icons.users('w-5 h-5')}</div>
           </div>
-          <div class="kpi-value" style="color:#059669;">
+          <div class="kpi-value" style="color:#059669;" id="kpi-val-active-petugas">
             ${activePetugasCount} <span style="font-size:0.85rem; font-weight:600; color:#64748b;">/ ${totalPetugasCount} Petugas</span>
           </div>
-          <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">
+          <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;" id="kpi-sub-active-petugas">
             ${totalPetugasCount > 0 ? Math.round((activePetugasCount / totalPetugasCount) * 100) : 0}% petugas sudah mengirim data
           </div>
         </div>
@@ -47,10 +47,10 @@ export function renderPetugasAnalysisPage() {
             <span class="kpi-title">Top Surveyor Terbanyak</span>
             <div class="kpi-icon-wrap" style="color:#f59e0b;">${icons.chart('w-5 h-5')}</div>
           </div>
-          <div class="kpi-value" style="font-size:1.25rem; color:#b45309; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${topPetugas ? topPetugas.nama : '-'}">
+          <div class="kpi-value" style="font-size:1.25rem; color:#b45309; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="kpi-val-top-petugas" title="${topPetugas ? topPetugas.nama : '-'}">
             ${topPetugas ? topPetugas.nama : 'Belum Ada'}
           </div>
-          <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">
+          <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;" id="kpi-sub-top-petugas">
             ${topPetugas ? `${topPetugas.total_survei} berkas (${topPetugas.wilayah_tugas})` : 'Belum ada data'}
           </div>
         </div>
@@ -60,7 +60,7 @@ export function renderPetugasAnalysisPage() {
             <span class="kpi-title">Rata-rata Input Petugas</span>
             <div class="kpi-icon-wrap" style="color:#8b5cf6;">${icons.home('w-5 h-5')}</div>
           </div>
-          <div class="kpi-value" style="color:#6d28d9;">
+          <div class="kpi-value" style="color:#6d28d9;" id="kpi-val-avg-surveys">
             ${avgSurveys} <span style="font-size:0.85rem; font-weight:600; color:#64748b;">Berkas/Petugas</span>
           </div>
           <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">
@@ -156,7 +156,41 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys, onPrin
 
   function renderRows() {
     if (!tbody) return;
-    const { petugasList, totalSurveys } = storage.getPetugasStats();
+    const pStats = storage.getPetugasStats();
+    const { petugasList, totalSurveys, activePetugasCount, totalPetugasCount, topPetugas } = pStats;
+    const avgSurveys = activePetugasCount > 0 ? (totalSurveys / activePetugasCount).toFixed(1) : 0;
+
+    // Perbarui kartu KPI di atas secara dinamis
+    const elTotal = container.querySelector("#kpi-val-total-surveys");
+    if (elTotal) elTotal.innerHTML = `${totalSurveys} <span style="font-size:0.85rem; font-weight:600; color:#64748b;">Berkas</span>`;
+
+    const elActive = container.querySelector("#kpi-val-active-petugas");
+    if (elActive) elActive.innerHTML = `${activePetugasCount} <span style="font-size:0.85rem; font-weight:600; color:#64748b;">/ ${totalPetugasCount} Petugas</span>`;
+
+    const elSubActive = container.querySelector("#kpi-sub-active-petugas");
+    if (elSubActive) elSubActive.textContent = `${totalPetugasCount > 0 ? Math.round((activePetugasCount / totalPetugasCount) * 100) : 0}% petugas sudah mengirim data`;
+
+    const elTop = container.querySelector("#kpi-val-top-petugas");
+    if (elTop) {
+      elTop.textContent = topPetugas ? topPetugas.nama : "Belum Ada";
+      elTop.title = topPetugas ? topPetugas.nama : "-";
+    }
+
+    const elSubTop = container.querySelector("#kpi-sub-top-petugas");
+    if (elSubTop) elSubTop.textContent = topPetugas ? `${topPetugas.total_survei} berkas (${topPetugas.wilayah_tugas})` : "Belum ada data";
+
+    const elAvg = container.querySelector("#kpi-val-avg-surveys");
+    if (elAvg) elAvg.innerHTML = `${avgSurveys} <span style="font-size:0.85rem; font-weight:600; color:#64748b;">Berkas/Petugas</span>`;
+
+    const filterStatus = container.querySelector("#filter-petugas-status");
+    if (filterStatus) {
+      const allOpt = filterStatus.querySelector('option[value="ALL"]');
+      if (allOpt) allOpt.textContent = `Semua Petugas (${totalPetugasCount})`;
+      const actOpt = filterStatus.querySelector('option[value="ACTIVE"]');
+      if (actOpt) actOpt.textContent = `Hanya yang Sudah Input (${activePetugasCount})`;
+      const zeroOpt = filterStatus.querySelector('option[value="ZERO"]');
+      if (zeroOpt) zeroOpt.textContent = `Belum Ada Input (${totalPetugasCount - activePetugasCount})`;
+    }
 
     const query = (searchInput?.value || "").toLowerCase().trim();
     const filterVal = statusFilter?.value || "ALL";
@@ -235,14 +269,14 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys, onPrin
 
           <td>
             <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-              <span class="badge" style="background:#10b981; color:white; font-size:0.72rem; padding:3px 8px;" title="Terverifikasi Valid">
-                 ${p.terverifikasi} Valid
+              <span class="badge" style="background:#10b981; color:white; font-size:0.72rem; padding:3px 8px;" title="Terverifikasi / Termasuk RTLH">
+                 ${p.terverifikasi} Termasuk RTLH
               </span>
               <span class="badge" style="background:#f59e0b; color:white; font-size:0.72rem; padding:3px 8px;" title="Menunggu Validasi Kelurahan">
                  ${p.pending} Menunggu
               </span>
-              <span class="badge" style="background:#ef4444; color:white; font-size:0.72rem; padding:3px 8px;" title="Perlu Revisi Petugas">
-                ${p.revisi} Revisi
+              <span class="badge" style="background:#ef4444; color:white; font-size:0.72rem; padding:3px 8px;" title="Bukan Termasuk RTLH">
+                ${p.revisi} Bukan RTLH
               </span>
             </div>
           </td>
@@ -286,6 +320,21 @@ export function initPetugasAnalysisPageEvents(container, { onViewSurveys, onPrin
   }
 
   renderRows();
+
+  // Auto-sync data dari MySQL di latar belakang agar data yang baru dikirim petugas langsung terupdate
+  (async () => {
+    try {
+      if (typeof storage.syncUsersFromDB === "function") {
+        await storage.syncUsersFromDB();
+      }
+      if (typeof storage.syncSurveysFromDB === "function") {
+        await storage.syncSurveysFromDB();
+        renderRows();
+      }
+    } catch (e) {
+      console.warn("Gagal auto-sync data di Kinerja Petugas:", e);
+    }
+  })();
 
   if (searchInput) searchInput.addEventListener("input", renderRows);
   if (statusFilter) statusFilter.addEventListener("change", renderRows);

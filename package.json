@@ -10,6 +10,7 @@
     "start": "node server.js",
     "build": "vite build",
     "migrate": "node server/migrate.js",
+    "migrate:ids": "node server/migrateSurveyIds.js",
     "seed:admin": "node server/seedAdmin.js",
     "preview": "vite preview"
   },

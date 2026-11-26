@@ -867,6 +867,17 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
     try {
       const data = Object.fromEntries(new FormData(form).entries());
 
+      // Sanitasi angka agar tidak mengirim string kosong ("") ke database
+      data.jumlah_jiwa = Number(data.jumlah_jiwa) || 1;
+      data.jumlah_lansia_balita = Number(data.jumlah_lansia_balita) || 0;
+      data.lama_tinggal = Number(data.lama_tinggal) || 1;
+      if (data.luas_bangunan !== undefined && data.luas_bangunan !== null && data.luas_bangunan !== "") {
+        data.luas_bangunan = Number(data.luas_bangunan);
+      }
+      if (data.usia !== undefined && data.usia !== null && data.usia !== "") {
+        data.usia = Number(data.usia);
+      }
+
       // Pastikan rw dan rt tidak hilang jika select dalam keadaan disabled/styled
       const rwSelect = form.querySelector('[name="rw"]');
       const rtSelect = form.querySelector('[name="rt"]');
@@ -892,6 +903,49 @@ export function initSurveyFormEvents(container, { onSaveSuccess, onCancel }) {
         data.created_by = currentUser.id;
         data.petugas_nama = currentUser.nama;
         data.petugas_id = currentUser.id_petugas || currentUser.id;
+      }
+
+      // Deteksi & Pencegahan Cerdas Data Duplikat (Berdasarkan NIK atau Nama + RT/RW yang sama)
+      if (!surveyId && !data.id) {
+        const existingList = storage.getSurveys() || [];
+        const cleanNik = (data.nik || "").trim();
+        const cleanName = (data.nama_kk || "").toLowerCase().trim();
+        const cleanRw = String(data.rw || "").padStart(2, "0");
+        const cleanRt = String(data.rt || "").padStart(2, "0");
+
+        // 1. Cek NIK yang sama
+        const dupNik = existingList.find(s => (s.nik || "").trim() === cleanNik);
+        if (dupNik) {
+          const confirmUpdate = confirm(
+            `⚠️ Warga dengan NIK ${cleanNik} sudah terdaftar atas nama "${dupNik.nama_kk}" di RT ${dupNik.rt}/RW ${dupNik.rw} (No. BNBA: ${dupNik.no_urut_bnba}).\n\nApakah Anda ingin MEMPERBARUI data warga tersebut alih-alih membuat data ganda baru?`
+          );
+          if (confirmUpdate) {
+            data.id = dupNik.id;
+            data.no_urut_bnba = dupNik.no_urut_bnba;
+          } else {
+            isSubmitting = false;
+            return;
+          }
+        } else {
+          // 2. Cek Nama Warga yang sama pada RT & RW yang sama
+          const dupName = existingList.find(s => 
+            (s.nama_kk || "").toLowerCase().trim() === cleanName &&
+            String(s.rw || "").padStart(2, "0") === cleanRw &&
+            String(s.rt || "").padStart(2, "0") === cleanRt
+          );
+          if (dupName) {
+            const isSameCitizen = confirm(
+              `ℹ️ Konfirmasi Nama Serupa:\n\nDitemukan warga bernama "${data.nama_kk}" di RW ${cleanRw} / RT ${cleanRt} (NIK terdaftar: ${dupName.nik}, No. BNBA: ${dupName.no_urut_bnba}).\n\nApakah ini ORANG YANG SAMA?\n• Klik [OK] jika ini ORANG YANG SAMA (untuk koreksi NIK / perbarui data lama).\n• Klik [BATAL] jika ini MEMANG ORANG BERBEDA (sistem akan menyimpannya sebagai warga baru).`
+            );
+            if (isSameCitizen) {
+              data.id = dupName.id;
+              data.no_urut_bnba = dupName.no_urut_bnba;
+            } else {
+              // Warga berbeda dengan nama yang sama -> Lanjutkan simpan sebagai data baru
+              console.log(`[Survey] Nama sama tapi orang berbeda, melanjutkan simpan berkas baru untuk NIK ${cleanNik}.`);
+            }
+          }
+        }
       }
 
       // Optimalkan ukuran 4 foto sebelum kirim ke server (kompresi agar lolos batas Nginx & hemat kuota HP)

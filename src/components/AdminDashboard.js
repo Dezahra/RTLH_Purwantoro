@@ -22,7 +22,7 @@ export function renderDashboard() {
 
       <div class="kpi-card" style="border-left: 4px solid var(--success);">
         <div class="kpi-header">
-          <span class="kpi-title">Terverifikasi Valid</span>
+          <span class="kpi-title">Terverifikasi / Termasuk RTLH</span>
           <div class="kpi-icon-wrap" style="color:var(--success);">${icons.checkCircle('w-4 h-4')}</div>
         </div>
         <div class="kpi-value" style="color:var(--success);">${stats.terverifikasi} <span style="font-size:0.9rem; font-weight:600;">(${stats.persenVerifikasi || 0}%)</span></div>
@@ -30,7 +30,7 @@ export function renderDashboard() {
 
       <div class="kpi-card" style="border-left: 4px solid var(--warning);">
         <div class="kpi-header">
-          <span class="kpi-title">Menunggu Validasi</span>
+          <span class="kpi-title">Menunggu</span>
           <div class="kpi-icon-wrap" style="color:var(--warning);">${icons.clipboard('w-4 h-4')}</div>
         </div>
         <div class="kpi-value" style="color:var(--warning);">${stats.pending}</div>
@@ -77,7 +77,7 @@ export function initDashboardCharts(container) {
     statusChartInstance = new Chart(ctxPie, {
       type: "doughnut",
       data: {
-        labels: ["Terverifikasi", "Menunggu Validasi", "Butuh Revisi"],
+        labels: ["Terverifikasi / Termasuk RTLH", "Menunggu", "Bukan Termasuk RTLH"],
         datasets: [{
           data: [stats.terverifikasi || 0, stats.pending || 0, stats.revisi || 0],
           backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
@@ -119,13 +119,13 @@ export function initDashboardCharts(container) {
         labels: rwLabels.length > 0 ? rwLabels : ["RW 01"],
         datasets: [
           {
-            label: "Terverifikasi",
+            label: "Terverifikasi / Termasuk RTLH",
             data: rwLabels.length > 0 ? verifData : [0],
             backgroundColor: "#10b981",
             borderRadius: 6
           },
           {
-            label: "Menunggu / Revisi",
+            label: "Menunggu / Bukan RTLH",
             data: rwLabels.length > 0 ? pendingData : [0],
             backgroundColor: "#f59e0b",
             borderRadius: 6

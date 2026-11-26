@@ -454,6 +454,10 @@ async function handleRestore(req, res) {
         let surveyCount = 0;
 
         const [dbCols] = await connection.query("DESCRIBE surveys");
+        const colTypeMap = new Map();
+        dbCols.forEach(c => {
+          colTypeMap.set(c.Field, (c.Type || "").toLowerCase());
+        });
         const actualDbCols = new Set(dbCols.map(c => c.Field));
 
         const cols = [
@@ -477,7 +481,13 @@ async function handleRestore(req, res) {
           for (const c of cols) {
             if (actualDbCols.has(c) && Object.prototype.hasOwnProperty.call(s, c)) {
               fields.push(`\`${c}\``);
-              values.push(typeof s[c] === "object" && s[c] !== null ? JSON.stringify(s[c]) : s[c]);
+              let val = typeof s[c] === "object" && s[c] !== null ? JSON.stringify(s[c]) : s[c];
+              const colType = colTypeMap.get(c) || "";
+              const isNumericOrDate = /int|decimal|float|double|numeric|date|time|year/.test(colType);
+              if (val === "" && isNumericOrDate) {
+                val = null;
+              }
+              values.push(val);
               updates.push(`\`${c}\` = VALUES(\`${c}\`)`);
             }
           }

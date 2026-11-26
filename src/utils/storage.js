@@ -454,18 +454,57 @@ export function isPetugasNameMatch(nameA, nameB) {
   if (!nameA || !nameB) return false;
   const a = normalizePetugasName(nameA);
   const b = normalizePetugasName(nameB);
+  if (!a || !b) return false;
   if (a === b) return true;
-  if (a.includes(b) || b.includes(a)) return true;
 
-  // Cek token kata nama (misal "vicky wahyu firmansyah" dan "vicky wahyu")
-  const tokensA = a.split(" ").filter(t => t.length > 2);
-  const tokensB = b.split(" ").filter(t => t.length > 2);
+  // Nama generik jangan pernah dicocokkan
+  if (a === "petugas" || b === "petugas" || a === "petugas lapangan" || b === "petugas lapangan") {
+    return false;
+  }
+
+  // Pisahkan token nama (kata dengan panjang minimal 3 karakter)
+  const tokensA = a.split(" ").filter(t => t.length >= 3);
+  const tokensB = b.split(" ").filter(t => t.length >= 3);
+  if (tokensA.length === 0 || tokensB.length === 0) return false;
+
+  // Jika dua nama memiliki minimal 2 token yang sama persis (misal "vicky wahyu" & "vicky wahyu firmansyah")
   const common = tokensA.filter(t => tokensB.includes(t));
-  return common.length >= 2 || (tokensA.length === 1 && common.length >= 1) || (tokensB.length === 1 && common.length >= 1);
+  if (common.length >= 2) return true;
+
+  // Jika nama hanya 1 kata (misal "Mustofa", "Sumiarti", "Suwarsih", "Indrawati")
+  if (tokensA.length === 1 && tokensB.length === 1) {
+    return tokensA[0] === tokensB[0];
+  }
+
+  // Jika salah satu hanya 1 kata unik (misal "Mustofa" vs "Mustofa Alim")
+  const singleToken = tokensA.length === 1 ? tokensA[0] : (tokensB.length === 1 ? tokensB[0] : null);
+  const generalTokens = ["sri", "rini", "indah", "dewi", "nur", "setya", "setia", "suliyati", "utami", "hastini"];
+  if (singleToken && !generalTokens.includes(singleToken)) {
+    if (tokensA.includes(singleToken) && tokensB.includes(singleToken)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function isSurveyOwnedByPetugas(surveyItem, user) {
   if (!user || !surveyItem) return false;
+
+  // Admin dan Pegawai dapat melihat semua data
+  if (user.role === 'admin' || user.role === 'pegawai') {
+    return true;
+  }
+
+  // ATURAN 1: ISOLASI WILAYAH RW MUTLAK
+  // Petugas HANYA bertugas di wilayah RW miliknya. Data dari RW lain 100% BUKAN miliknya!
+  if (user.rw && surveyItem.rw) {
+    const uRw = String(user.rw).replace(/\D/g, '').padStart(2, '0');
+    const sRw = String(surveyItem.rw).replace(/\D/g, '').padStart(2, '0');
+    if (uRw && sRw && uRw !== sRw) {
+      return false; // TOLAK MUTLAK: RW berbeda!
+    }
+  }
 
   const uId = String(user.id || "").toLowerCase().trim();
   const uUsername = String(user.username || "").toLowerCase().trim();
@@ -474,50 +513,46 @@ export function isSurveyOwnedByPetugas(surveyItem, user) {
 
   const cBy = String(surveyItem.created_by || "").toLowerCase().trim();
   const pId = String(surveyItem.petugas_id || "").toLowerCase().trim();
-  const pNama = String(surveyItem.petugas_nama || surveyItem.nama_petugas || "").toLowerCase().trim();
+  const pNama = String(surveyItem.petugas_nama || surveyItem.nama_petugas || surveyItem.surveyor_nama || "").toLowerCase().trim();
 
-  // 1. Jika data ini dibuat / disurvei oleh Admin atau Pegawai Kelurahan, BUKAN milik Petugas
-  const isAdminOrPegawai =
-    cBy.includes("adm") ||
-    cBy.includes("pgw") ||
-    pId.startsWith("adm") ||
-    pId.startsWith("pgw") ||
-    pNama.includes("admin") ||
-    pNama.includes("pegawai") ||
-    pNama.includes("devi zahra");
+  // ATURAN 2: Jika data ini disurvei murni oleh Admin/Pegawai (bukan nama petugas), tolak
+  const isPureAdminSurvey =
+    (pNama.includes("admin") || pNama.includes("pegawai") || pNama.includes("devi zahra")) &&
+    !isPetugasNameMatch(pNama, uNama);
 
-  if (isAdminOrPegawai) {
-    if (uId && cBy === uId) return true;
-    if (uUsername && cBy === uUsername) return true;
+  if (isPureAdminSurvey) {
     return false;
   }
 
-  // 2. Cek kepemilikan eksplisit berdasarkan created_by
-  if (cBy) {
-    if (uId && (cBy === uId || cBy.includes(uId) || uId.includes(cBy))) return true;
+  // ATURAN 3: KEPEMILIKAN EKSPLISIT (created_by atau petugas_id sama persis)
+  if (cBy && cBy !== "petugas" && cBy !== "petugas lapangan") {
+    if (uId && cBy === uId) return true;
     if (uUsername && cBy === uUsername) return true;
     if (uIdPetugas && cBy === uIdPetugas) return true;
   }
-
-  // 3. Cek petugas_id terhadap id_petugas, id, username
-  if (pId) {
-    if (uIdPetugas && (pId === uIdPetugas || pId.includes(uIdPetugas) || uIdPetugas.includes(pId))) return true;
+  if (pId && pId !== "petugas" && pId !== "petugas lapangan") {
+    if (uIdPetugas && pId === uIdPetugas) return true;
     if (uId && pId === uId) return true;
     if (uUsername && pId === uUsername) return true;
   }
 
-  // 4. Cek petugas_nama terhadap nama user (toleran variasi ejaan Vicki/Vicky, nama lengkap/singkat)
-  if (pNama && uNama) {
+  // ATURAN 4: KECOCOKAN NAMA SURVEYOR
+  if (pNama && uNama && pNama !== "petugas" && pNama !== "petugas lapangan") {
     if (isPetugasNameMatch(pNama, uNama)) return true;
   }
 
-  // 5. Toleransi kemitraan RW (Khusus surveyor sesama RW 16, misal Muhammad Nizar & Vicki Wahyu)
-  if (user.role === 'petugas' && user.rw && surveyItem.rw) {
+  // ATURAN 5: PENCOCOKAN RT PENUGASAN DALAM 1 RW
+  // Jika nama petugas kosong atau default 'Petugas Lapangan', cocokkan RT penugasan
+  if (user.rw && surveyItem.rw) {
     const uRw = String(user.rw).replace(/\D/g, '').padStart(2, '0');
     const sRw = String(surveyItem.rw).replace(/\D/g, '').padStart(2, '0');
-    if (uRw && sRw && uRw === sRw) {
-      if (isPetugasNameMatch(pNama, uNama)) return true;
-      // Khusus kolaborasi keluarga di RW 16 (Muhammad Nizar Bustomi & Vicki Wahyu)
+    if (uRw === sRw && user.rt && surveyItem.rt) {
+      const uRts = String(user.rt).split(',').map(t => t.replace(/\D/g, '').padStart(2, '0')).filter(Boolean);
+      const sRt = String(surveyItem.rt).replace(/\D/g, '').padStart(2, '0');
+      const isGenericOrEmpty = !pNama || pNama === "petugas" || pNama === "petugas lapangan" || pNama === "-" || pNama === "null";
+      if (isGenericOrEmpty && uRts.includes(sRt)) return true;
+
+      // Khusus kolaborasi keluarga di RW 16 (Muhammad Nizar Bustomi & Vicky Wahyu)
       const isRw16Family = (uNama.includes("vick") || uNama.includes("nizar")) &&
         (pNama.includes("vick") || pNama.includes("nizar"));
       if (isRw16Family && uRw === "16") return true;
@@ -661,6 +696,7 @@ export const storage = {
 
         const merged = [...resData.data, ...unsyncedLocals];
         this.saveSurveys(merged);
+        this.standardizeLocalSurveyIds();
 
         // Latar belakang: unggah otomatis survei lokal yang tertinggal ke server MySQL
         if (unsyncedLocals.length > 0) {
@@ -726,7 +762,80 @@ export const storage = {
       }
     });
     if (maxSeq === 0) maxSeq = list.length;
-    return `BNBA-${currentYear}-${String(maxSeq + 1).padStart(3, "0")}`;
+    return `BNBA-${currentYear}-${String(maxSeq + 1).padStart(4, "0")}`;
+  },
+
+  getNextSurveyId() {
+    const list = this.getSurveys();
+    const currentYear = new Date().getFullYear();
+    let maxSeq = 0;
+    list.forEach(s => {
+      if (s.id) {
+        const match = String(s.id).match(new RegExp(`^SRV-${currentYear}-(\\d+)$`));
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      }
+    });
+    // Fallback jika belum ada ID berformat SRV-YYYY-XXXX
+    if (maxSeq === 0) {
+      list.forEach(s => {
+        if (s.no_urut_bnba) {
+          const match = s.no_urut_bnba.match(/(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxSeq) maxSeq = num;
+          }
+        }
+      });
+      if (maxSeq === 0) maxSeq = list.length;
+    }
+    return `SRV-${currentYear}-${String(maxSeq + 1).padStart(4, "0")}`;
+  },
+
+  standardizeLocalSurveyIds() {
+    const list = this.getSurveys();
+    if (!list || list.length === 0) return 0;
+
+    const currentYear = new Date().getFullYear();
+    let hasChanges = false;
+
+    // Periksa apakah ada ID yang belum sesuai format standar 4 digit SRV-YYYY-XXXX
+    const needsStandardize = list.some(s => !String(s.id).match(new RegExp(`^SRV-${currentYear}-\\d{4,}$`)));
+    if (!needsStandardize) return 0;
+
+    // Urutkan berdasarkan created_at ASC atau tanggal_survey
+    const sorted = [...list].sort((a, b) => {
+      const da = new Date(a.created_at || a.tanggal_survey || 0).getTime();
+      const db = new Date(b.created_at || b.tanggal_survey || 0).getTime();
+      return da - db;
+    });
+
+    sorted.forEach((item, index) => {
+      const seq = index + 1;
+      const targetId = `SRV-${currentYear}-${String(seq).padStart(4, "0")}`;
+      let targetBnba = item.no_urut_bnba;
+      if (!targetBnba || targetBnba.includes("null") || targetBnba.includes("undefined")) {
+        targetBnba = `BNBA-${currentYear}-${String(seq).padStart(4, "0")}`;
+      } else {
+        const m = targetBnba.match(/(\d+)$/);
+        if (m) {
+          targetBnba = `BNBA-${currentYear}-${String(parseInt(m[1], 10)).padStart(4, "0")}`;
+        }
+      }
+
+      if (item.id !== targetId || item.no_urut_bnba !== targetBnba) {
+        item.id = targetId;
+        item.no_urut_bnba = targetBnba;
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      this.saveSurveys(sorted);
+    }
+    return sorted.length;
   },
 
   saveSurveys(surveys) {
@@ -765,7 +874,15 @@ export const storage = {
     const list = this.getSurveys();
     const currentUser = this.getCurrentUser();
 
-    data.lama_tinggal = Number(data.lama_tinggal) || 0;
+    data.lama_tinggal = Number(data.lama_tinggal) || 1;
+    data.jumlah_jiwa = Number(data.jumlah_jiwa) || 1;
+    data.jumlah_lansia_balita = Number(data.jumlah_lansia_balita) || 0;
+    if (data.usia !== undefined && data.usia !== null && data.usia !== "") {
+      data.usia = Number(data.usia) || null;
+    }
+    if (data.luas_bangunan !== undefined && data.luas_bangunan !== null && data.luas_bangunan !== "") {
+      data.luas_bangunan = Number(data.luas_bangunan) || null;
+    }
     data.aset_rumah_lain = data.aset_rumah_lain || "Tidak";
 
     const result = calculateHousingEligibility(data);
@@ -776,7 +893,7 @@ export const storage = {
       rt: data.rt || (currentUser?.role === 'petugas' && currentUser?.rt ? String(currentUser.rt).padStart(2, '0') : data.rt),
       created_by: data.created_by || currentUser?.id,
       petugas_nama: data.petugas_nama || currentUser?.nama || "Petugas Lapangan",
-      petugas_id: data.petugas_id || currentUser?.id_petugas || currentUser?.id || "PETUGAS-01",
+      petugas_id: data.petugas_id || currentUser?.id_petugas || currentUser?.id || null,
       skor_total: 0,
       kategori_kelayakan: "",
       kategori_label: "",
@@ -797,18 +914,7 @@ export const storage = {
     }
 
     if (!enriched.id) {
-      const year = new Date().getFullYear();
-      let uuidStr;
-      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-        uuidStr = crypto.randomUUID();
-      } else {
-        uuidStr = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-          const r = (Math.random() * 16) | 0;
-          const v = c === "x" ? r : (r & 0x3) | 0x8;
-          return v.toString(16);
-        });
-      }
-      enriched.id = `SRV-${year}-${uuidStr}`;
+      enriched.id = this.getNextSurveyId();
       enriched.status_verifikasi = enriched.status_verifikasi || "MENUNGGU_VALIDASI";
       enriched.created_at = new Date().toISOString();
       list.unshift(enriched);
@@ -886,7 +992,7 @@ export const storage = {
       if (status) {
         target.status_verifikasi = status;
         if (status === "TERVERIFIKASI") target.verified_at = new Date().toISOString();
-        if (status === "BUTUH_REVISI") target.revision_at = new Date().toISOString();
+        if (status === "BUTUH_REVISI" || status === "BUKAN_RTLH") target.revision_at = new Date().toISOString();
       }
       if (catatanAdmin !== undefined) target.catatan_admin = catatanAdmin;
       if (programBantuan !== undefined) target.program_bantuan = programBantuan;
@@ -1028,7 +1134,7 @@ export const storage = {
     if (!user) return 0;
     const list = this.getSurveys();
     const owned = list.filter(item => isSurveyOwnedByPetugas(item, user));
-    return owned.filter(item => item.status_verifikasi === 'BUTUH_REVISI').length;
+    return owned.filter(item => item.status_verifikasi === 'BUTUH_REVISI' || item.status_verifikasi === 'BUKAN_RTLH').length;
   },
 
   async registerUserAsync(userData) {
@@ -1220,7 +1326,7 @@ export const storage = {
     list.forEach(item => {
       if (item.status_verifikasi === "MENUNGGU_VALIDASI") pending++;
       else if (item.status_verifikasi === "TERVERIFIKASI") terverifikasi++;
-      else if (item.status_verifikasi === "BUTUH_REVISI") revisi++;
+      else if (item.status_verifikasi === "BUTUH_REVISI" || item.status_verifikasi === "BUKAN_RTLH") revisi++;
       else pending++;
 
       const rwVal = item.rw ? String(item.rw).padStart(2, "0") : "01";
@@ -1228,7 +1334,7 @@ export const storage = {
       if (!rwMap[rwKey]) rwMap[rwKey] = { total: 0, terverifikasi: 0, pending: 0, revisi: 0 };
       rwMap[rwKey].total++;
       if (item.status_verifikasi === "TERVERIFIKASI") rwMap[rwKey].terverifikasi++;
-      else if (item.status_verifikasi === "BUTUH_REVISI") rwMap[rwKey].revisi++;
+      else if (item.status_verifikasi === "BUTUH_REVISI" || item.status_verifikasi === "BUKAN_RTLH") rwMap[rwKey].revisi++;
       else rwMap[rwKey].pending++;
 
       // 1. Kerusakan Struktur (Pondasi, Sloof, Kolom, Ring Balok, Rangka Atap)
@@ -1356,6 +1462,9 @@ export const storage = {
     list.forEach(survey => {
       let matchedKey = null;
 
+      const pNama = String(survey.petugas_nama || survey.nama_petugas || survey.surveyor_nama || "").toLowerCase().trim();
+      const pId = String(survey.petugas_id || survey.created_by || "").toLowerCase().trim();
+
       // Cari petugas terdaftar yang cocok
       for (const [key, p] of map.entries()) {
         const u = p.userRef;
@@ -1364,17 +1473,40 @@ export const storage = {
           break;
         }
         // Fallback pencocokan nama
-        const pNama = String(survey.petugas_nama || survey.nama_petugas || "").toLowerCase().trim();
         const uNama = String(p.nama || "").toLowerCase().trim();
-        if (pNama && uNama && (pNama === uNama || pNama.includes(uNama) || uNama.includes(pNama))) {
+        if (pNama && uNama && (isPetugasNameMatch(pNama, uNama) || pNama.includes(uNama) || uNama.includes(pNama))) {
           matchedKey = key;
           break;
         }
       }
 
+      // Fallback pencocokan wilayah penugasan RW dan RT (SK Petugas Lapangan Purwantoro)
+      if (!matchedKey && survey.rw) {
+        const sRw = String(survey.rw).replace(/\D/g, "").padStart(2, "0");
+        const sRt = String(survey.rt || "").replace(/\D/g, "").padStart(2, "0");
+
+        for (const [key, p] of map.entries()) {
+          const u = p.userRef;
+          if (!u || !u.rw) continue;
+          const uRw = String(u.rw).replace(/\D/g, "").padStart(2, "0");
+          if (uRw === sRw) {
+            if (u.rt && sRt) {
+              const uRts = String(u.rt).split(",").map(t => t.replace(/\D/g, "").padStart(2, "0")).filter(Boolean);
+              if (uRts.includes(sRt)) {
+                matchedKey = key;
+                break;
+              }
+            } else {
+              matchedKey = key;
+              break;
+            }
+          }
+        }
+      }
+
       const surveyDate = survey.tanggal_survey || survey.created_at || null;
       const isVerif = survey.status_verifikasi === 'TERVERIFIKASI';
-      const isRevisi = survey.status_verifikasi === 'BUTUH_REVISI';
+      const isRevisi = survey.status_verifikasi === 'BUTUH_REVISI' || survey.status_verifikasi === 'BUKAN_RTLH';
 
       if (matchedKey && map.has(matchedKey)) {
         const entry = map.get(matchedKey);

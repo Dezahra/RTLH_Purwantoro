@@ -21,7 +21,7 @@ export function renderPrintRekapBnba(selectedRw = "ALL") {
   let countValid = 0, countPending = 0, countRevisi = 0;
   sortedList.forEach(s => {
     if (s.status_verifikasi === "TERVERIFIKASI") countValid++;
-    else if (s.status_verifikasi === "BUTUH_REVISI") countRevisi++;
+    else if (s.status_verifikasi === "BUTUH_REVISI" || s.status_verifikasi === "BUKAN_RTLH") countRevisi++;
     else countPending++;
   });
 
@@ -90,9 +90,9 @@ export function renderPrintRekapBnba(selectedRw = "ALL") {
           <!-- Ringkasan Statistik -->
           <div style="margin-bottom: 12px; font-size: 9pt; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border: 1px solid #333; padding: 6px 10px; background: #fafafa;">
             <div>Total Terdaftar: <strong>${sortedList.length} Unit</strong></div>
-            <div>Terverifikasi Valid: <strong>${countValid} Unit</strong></div>
-            <div>Menunggu Validasi: <strong>${countPending} Unit</strong></div>
-            <div>Butuh Revisi: <strong>${countRevisi} Unit</strong></div>
+            <div>Terverifikasi / Termasuk RTLH: <strong>${countValid} Unit</strong></div>
+            <div>Menunggu: <strong>${countPending} Unit</strong></div>
+            <div>Bukan Termasuk RTLH: <strong>${countRevisi} Unit</strong></div>
           </div>
 
           <!-- Tabel Rekapitulasi BNBA -->
@@ -135,7 +135,7 @@ export function renderPrintRekapBnba(selectedRw = "ALL") {
                     ${item.luas_bangunan || '-'} m² (${item.status_rumah || '-'})
                   </td>
                   <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 8pt; font-weight: bold;">
-                    ${item.status_verifikasi === 'TERVERIFIKASI' ? '✓ VALID' : (item.status_verifikasi === 'BUTUH_REVISI' ? 'REVISI' : 'MENUNGGU')}
+                    ${item.status_verifikasi === 'TERVERIFIKASI' ? 'TERMASUK RTLH' : ((item.status_verifikasi === 'BUTUH_REVISI' || item.status_verifikasi === 'BUKAN_RTLH') ? 'BUKAN RTLH' : 'MENUNGGU')}
                   </td>
                 </tr>
               `).join('')}

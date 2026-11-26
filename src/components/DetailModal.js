@@ -436,9 +436,9 @@ export function renderDetailModal(survey) {
               <div class="form-group" style="margin-bottom:0.75rem;">
                 <label class="form-label">Status Verifikasi Kelurahan Purwantoro</label>
                 <select id="modal-select-verif" class="form-select">
-                  <option value="MENUNGGU_VALIDASI" ${survey.status_verifikasi === 'MENUNGGU_VALIDASI' ? 'selected' : ''}> Menunggu Validasi</option>
-                  <option value="TERVERIFIKASI" ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'selected' : ''}>✓ Terverifikasi Layak Program</option>
-                  <option value="BUTUH_REVISI" ${survey.status_verifikasi === 'BUTUH_REVISI' ? 'selected' : ''}>⚠️ Butuh Perbaikan / Cek Ulang</option>
+                  <option value="MENUNGGU_VALIDASI" ${(!survey.status_verifikasi || survey.status_verifikasi === 'MENUNGGU_VALIDASI') ? 'selected' : ''}>Menunggu</option>
+                  <option value="TERVERIFIKASI" ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'selected' : ''}>Terverifikasi / Termasuk RTLH</option>
+                  <option value="BUKAN_RTLH" ${(survey.status_verifikasi === 'BUKAN_RTLH' || survey.status_verifikasi === 'BUTUH_REVISI') ? 'selected' : ''}>Bukan Termasuk RTLH</option>
                 </select>
               </div>
 
@@ -455,10 +455,10 @@ export function renderDetailModal(survey) {
             <div style="background:#f8fafc; border:1px solid var(--gray-200); border-radius:var(--radius-md); padding:1rem;">
               <div style="font-weight:700; font-size:0.85rem; color:var(--dark-800);">Status Verifikasi Kelurahan:</div>
               <div style="margin-top:0.35rem;">
-                <span class="badge ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'badge-success' : (survey.status_verifikasi === 'BUTUH_REVISI' ? 'badge-danger' : 'badge-warning')}">
-                  ${survey.status_verifikasi}
+                <span class="badge ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'badge-success' : ((survey.status_verifikasi === 'BUTUH_REVISI' || survey.status_verifikasi === 'BUKAN_RTLH') ? 'badge-danger' : 'badge-warning')}">
+                  ${survey.status_verifikasi === 'TERVERIFIKASI' ? 'Terverifikasi / Termasuk RTLH' : ((survey.status_verifikasi === 'BUTUH_REVISI' || survey.status_verifikasi === 'BUKAN_RTLH') ? 'Bukan Termasuk RTLH' : 'Menunggu')}
                 </span>
-                ${survey.catatan_admin ? `<span style="font-size:0.8rem; margin-left:0.5rem; color:var(--dark-700);">Catatan Admin: "${survey.catatan_admin}"</span>` : ''}
+                ${survey.catatan_admin ? `<span style="font-size:0.8rem; margin-left:0.5rem; color:var(--dark-700);">Catatan: "${survey.catatan_admin}"</span>` : ''}
               </div>
             </div>
           `}
