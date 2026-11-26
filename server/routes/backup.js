@@ -422,16 +422,38 @@ async function handleRestore(req, res) {
     if (sqlToExecute) {
       await pool.query("SET FOREIGN_KEY_CHECKS = 0");
 
-      const statements = sqlToExecute
-        .split(";\n")
+      // 1. Bersihkan komentar SQL multi-line (/* ... */) dan single-line (-- ...)
+      const cleanSql = sqlToExecute
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/--.*$/gm, "");
+
+      // 2. Pisahkan pernyataan SQL berdasarkan titik koma (;) di akhir baris
+      const statements = cleanSql
+        .split(/;\s*[\r\n]+/)
         .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith("--"));
+        .filter((s) => s.length > 0);
 
       let executedCount = 0;
       for (const stmt of statements) {
         if (stmt.length > 0) {
-          await pool.query(stmt);
-          executedCount++;
+          try {
+            await pool.query(stmt);
+            executedCount++;
+          } catch (stmtErr) {
+            // Toleransi jika tabel sudah ada: lakukan DROP TABLE lalu ulangi pembuatan tabel
+            if (stmtErr.code === "ER_TABLE_EXISTS_ERROR") {
+              const tblMatch = stmt.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i);
+              if (tblMatch && tblMatch[1]) {
+                const tableName = tblMatch[1];
+                console.warn(`[Restore] Menimpa tabel lama '${tableName}' agar data cadangan berhasil dipulihkan...`);
+                await pool.query(`DROP TABLE IF EXISTS \`${tableName}\``);
+                await pool.query(stmt);
+                executedCount++;
+                continue;
+              }
+            }
+            throw stmtErr;
+          }
         }
       }
 
