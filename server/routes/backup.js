@@ -420,6 +420,12 @@ async function handleRestore(req, res) {
     }
 
     if (sqlToExecute) {
+      try {
+        await pool.query("SET GLOBAL max_allowed_packet = 1073741824");
+      } catch (_) {}
+      try {
+        await pool.query("SET max_allowed_packet = 1073741824");
+      } catch (_) {}
       await pool.query("SET FOREIGN_KEY_CHECKS = 0");
 
       // 1. Bersihkan komentar SQL multi-line (/* ... */) dan single-line (-- ...)

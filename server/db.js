@@ -17,6 +17,15 @@ export const pool = mysql.createPool({
   charset: "utf8mb4"
 });
 
+export async function ensureMaxAllowedPacket() {
+  try {
+    await pool.query("SET GLOBAL max_allowed_packet = 1073741824");
+    console.log("[MySQL] ✅ max_allowed_packet berhasil disetel ke 1GB untuk mendukung impor foto & cadangan besar.");
+  } catch (err) {
+    console.warn("[MySQL] Tidak dapat menyetel global max_allowed_packet:", err.message);
+  }
+}
+
 // Otomatis menanam akun admin & 24 petugas ke dalam database Docker jika belum ada
 export async function ensureDefaultUsers() {
   try {
@@ -255,6 +264,9 @@ export async function standardizeAllSurveyIds(targetPool = pool) {
     const conn = await pool.getConnection();
     console.log("[MySQL] Berhasil terhubung ke basis data:", process.env.DB_NAME || "sipelita_desa");
     conn.release();
+
+    // Otomatis naikkan batas ukuran paket MySQL ke 1GB agar restore file cadangan besar (88MB) tidak gagal
+    await ensureMaxAllowedPacket();
 
     // Otomatis cek & tanam akun admin dan 24 petugas saat server menyala
     await ensureDefaultUsers();
